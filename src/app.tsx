@@ -59,7 +59,7 @@ const App: React.FC = () => {
         <div>
           {Object.entries(colorGroups).map(([color, items]) => (
             <div key={color}>
-              <h2 style={{ color: color }}>{color}</h2>
+              <h2 style={{ textTransform: 'capitalize' }}>{color}</h2>
               <ul>
                 {(items as { type: string; content: string }[]).map(
                   (item, index) => (
