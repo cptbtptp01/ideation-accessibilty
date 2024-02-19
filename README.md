@@ -1,4 +1,5 @@
-## Miro Hello World
+## Miro Accessibility Plugin
+Bridging the gap between Miro and the visually impaired community!
 
 **&nbsp;ℹ&nbsp;Note**:
 
@@ -39,14 +40,3 @@
 ├── app.html       // The app itself. It's loaded on the board inside the 'appContainer'
 └── index.html     // The app entry point. This is what you specify in the 'App URL' box in the Miro app settings
 ```
-
-### About the app
-
-This sample app provides you with boilerplate setup and configuration that you can further customize to build your own app.
-
-<!-- describe shortly the purpose of the sample app -->
-
-Built using [`create-miro-app`](https://www.npmjs.com/package/create-miro-app).
-
-This app uses [Vite](https://vitejs.dev/). \
-If you want to modify the `vite.config.js` configuration, see the [Vite documentation](https://vitejs.dev/guide/).
