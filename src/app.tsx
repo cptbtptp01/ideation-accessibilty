@@ -3,44 +3,33 @@ import { createRoot } from "react-dom/client";
 
 import "../src/assets/style.css";
 
-async function addSticky() {
-  const stickyNote = await miro.board.createStickyNote({
-    content: "Hello, World!",
-  });
-
-  await miro.board.viewport.zoomTo(stickyNote);
-}
-
-async function countItems() {
-  const items = await miro.board.get();
-  const countMap: { [key: string]: number } = {};
-
-  items.forEach((item) => {
-    countMap[item.type] = (countMap[item.type] || 0) + 1;
-  });
-  return countMap;
-}
+import { groupItemsByColor } from "./grouping";
 
 const App: React.FC = () => {
-  const [itemCounts, setItemCounts] = React.useState<{ [key: string]: number }>(
-    {}
-  );
+  // group by color
+  const [colorGroups, setColorGroups] = React.useState<{
+    [key: string]: { type: string; content: string }[];
+  }>({});
+
   const [messages, setMessages] = React.useState<string[]>([]);
 
   React.useEffect(() => {
-    async function fetchItemCounts() {
-      const counts = await countItems();
-      setItemCounts(counts);
+    // WIP: structure overview feature
+    // TBD: a button for regeneration if board content updated?
+    async function fetchData() {
+      // {"hex_code": ["{type}: {content}"]}
+      const colorMap = await groupItemsByColor();
+      setColorGroups(colorMap);
     }
-    fetchItemCounts();
 
+    fetchData();
+
+    // WIP: notification feature
+    // TODO(hy): gernalize the event listener, it is doable to have one function and pass the event type as a parameter
     // Listen to the 'items:create' event.
     miro.board.ui.on("items:create", async (event) => {
       // array of created items
       const createdItems = event.items;
-      // update counts
-      const counts = await countItems();
-      setItemCounts(counts);
       // update messages
       const newMessages = createdItems.map(
         (item: { type: string; createdBy: string }) => {
@@ -54,9 +43,6 @@ const App: React.FC = () => {
     miro.board.ui.on("items:delete", async (event) => {
       // array of deleted items
       const deletedItems = event.items;
-      // update counts
-      const counts = await countItems();
-      setItemCounts(counts);
       // update messages
       const newMessages = deletedItems.map(
         (item: { type: string; createdBy: string }) => {
@@ -71,6 +57,25 @@ const App: React.FC = () => {
     <div className="grid wrapper">
       <div className="cs1 ce12" role="region" aria-label="Item Information">
         <div>
+          {Object.entries(colorGroups).map(([color, items]) => (
+            <div key={color}>
+              <h2 style={{ color: color }}>{color}</h2>
+              <ul>
+                {(items as { type: string; content: string }[]).map(
+                  (item, index) => (
+                    <li key={index}>
+                      <span className="sr-only">{`${item.type} ${
+                        index + 1
+                      }`}</span>
+                      {`${item.type}: ${item.content}`}
+                    </li>
+                  )
+                )}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div>
           <h2>Activities</h2>
           <ul role="list">
             {messages.map((message, index) => (
@@ -79,17 +84,6 @@ const App: React.FC = () => {
               </li>
             ))}
           </ul>
-        </div>
-        <div>
-          <h2>Item Counts</h2>
-          <dl role="list">
-            {Object.keys(itemCounts).map((type, index) => (
-              <div key={index} role="listitem">
-                <dt>{type}</dt>
-                <dd>{itemCounts[type]}</dd>
-              </div>
-            ))}
-          </dl>
         </div>
       </div>
     </div>
