@@ -1,14 +1,15 @@
 import * as React from "react";
 import { createRoot } from "react-dom/client";
+import { BoardNode } from "@mirohq/websdk-types";
 
 import "../src/assets/style.css";
-
 import { groupItemsByColor } from "./grouping";
+import GroupingList from "./components/groupingList";
+import ActivityList from "./components/activityList"
 
 const App: React.FC = () => {
-  // group by color
   const [colorGroups, setColorGroups] = React.useState<{
-    [key: string]: { type: string; content: string }[];
+    [key: string]: BoardNode[];
   }>({});
 
   const [messages, setMessages] = React.useState<string[]>([]);
@@ -54,38 +55,9 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="grid wrapper">
-      <div className="cs1 ce12" role="region" aria-label="Item Information">
-        <div>
-          {Object.entries(colorGroups).map(([color, items]) => (
-            <div key={color}>
-              <h2 style={{ textTransform: 'capitalize' }}>{color}</h2>
-              <ul>
-                {(items as { type: string; content: string }[]).map(
-                  (item, index) => (
-                    <li key={index}>
-                      <span className="sr-only">{`${item.type} ${
-                        index + 1
-                      }`}</span>
-                      {`${item.type}: ${item.content}`}
-                    </li>
-                  )
-                )}
-              </ul>
-            </div>
-          ))}
-        </div>
-        <div>
-          <h2>Activities</h2>
-          <ul role="list">
-            {messages.map((message, index) => (
-              <li key={index} role="listitem">
-                {message}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+    <div className="cs1 ce2">
+      <GroupingList groups={colorGroups} />
+      <ActivityList messages={messages} />
     </div>
   );
 };
