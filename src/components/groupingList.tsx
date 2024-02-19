@@ -3,16 +3,18 @@ import * as React from "react";
 
 interface Props {
     groups: { [key: string]: BoardNode[] };
+    onUpdateGrouping: () => void;
 }
 
-const GroupingList: React.FC<Props> = ({ groups }) => {
+const GroupingList: React.FC<Props> = ({ groups, onUpdateGrouping }) => {
     return (
-            <div
+            <div className="cs1 ce12"
             role="region"
             aria-roledescription="overview"
             id="summary"
             aria-labelledby="overviewheading">
                 <h1 id="overviewheading">Overview</h1>
+                <button className="button button-primary button-medium" type="button" onClick={onUpdateGrouping}>Update Overview</button>
                 {Object.entries(groups).map(([color, items]) => (
                     <div key={color}>
                         <h2>{color}</h2>

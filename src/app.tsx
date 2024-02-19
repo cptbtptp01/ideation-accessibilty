@@ -14,11 +14,14 @@ const App: React.FC = () => {
 
   const [messages, setMessages] = React.useState<string[]>([]);
 
+  const handleUpdateGrouping = async () => {
+    const updatedColorMap = await groupItemsByColor();
+    setColorGroups(updatedColorMap);
+  };
+
   React.useEffect(() => {
     // WIP: structure overview feature
-    // TBD: a button for regeneration if board content updated?
     async function fetchData() {
-      // {"hex_code": ["{type}: {content}"]}
       const colorMap = await groupItemsByColor();
       setColorGroups(colorMap);
     }
@@ -27,6 +30,7 @@ const App: React.FC = () => {
 
     // WIP: notification feature
     // TODO(hy): gernalize the event listener, it is doable to have one function and pass the event type as a parameter
+
     // Listen to the 'items:create' event.
     miro.board.ui.on("items:create", async (event) => {
       // array of created items
@@ -55,8 +59,8 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="cs1 ce2">
-      <GroupingList groups={colorGroups} />
+    <div className="grid">
+      <GroupingList groups={colorGroups} onUpdateGrouping={handleUpdateGrouping}/>
       <ActivityList messages={messages} />
     </div>
   );

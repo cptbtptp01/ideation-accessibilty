@@ -6,7 +6,7 @@ interface Props {
 
 const ActivityList: React.FC<Props> = ({ messages }) => {
     return (
-        <div
+        <div className="cs1 ce12"
             aria-roledescription="activities"
             id="log"
             aria-labelledby="activitiesheading">
