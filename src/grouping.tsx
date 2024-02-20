@@ -21,6 +21,8 @@ export async function groupItems() {
             color = item.style.fillColor;
         } else if (item.type === "text") {
             color = item.style.color;
+        } else {
+            color = "Uncolored"
         }
 
         if (color in itemMap) {
@@ -29,6 +31,20 @@ export async function groupItems() {
             itemMap[color] = [item];
         }
     });
+
+    items.forEach((item) => {
+
+        if(item.type === "shape") {
+            let shape = item.shape
+
+            if(shape in itemMap) {
+                itemMap[shape].push(item);
+            } else {
+                itemMap[shape] = [item];
+            }
+        }
+
+    })
 
     return itemMap;
 }
