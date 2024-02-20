@@ -4,11 +4,10 @@
 import { BoardNode } from "@mirohq/websdk-types";
 
 // color grouping - should lookup for types with attribute color, e.g. sticker, shape,
-export async function groupItemsByColor() {
+export async function groupItems() {
     const items = await miro.board.get();
-    // TODO: current is hex code for colors
-    // TBD: nested map: {"hex_code": {"type": ["content1", "content2", ..]}}
-    const colorMap: { [key: string]: BoardNode[] } = {}; // {"hex_code": [item1, item2....]}
+    // TODO: check color output
+    const itemMap: { [key: string]: BoardNode[] } = {};
 
     items.forEach((item) => {
         let color;
@@ -24,12 +23,12 @@ export async function groupItemsByColor() {
             color = item.style.color;
         }
 
-        if (color in colorMap) {
-            colorMap[color].push(item); // TODO: debug, got "undefined 1undefined: undefined"
+        if (color in itemMap) {
+            itemMap[color].push(item); // TODO: debug, got "undefined 1undefined: undefined"
         } else {
-            colorMap[color] = [item];
+            itemMap[color] = [item];
         }
     });
 
-    return colorMap;
+    return itemMap;
 }

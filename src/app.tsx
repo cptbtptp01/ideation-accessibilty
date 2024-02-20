@@ -3,27 +3,27 @@ import { createRoot } from "react-dom/client";
 import { BoardNode } from "@mirohq/websdk-types";
 
 import "../src/assets/style.css";
-import { groupItemsByColor } from "./grouping";
+import { groupItems } from "./grouping";
 import GroupingList from "./components/groupingList";
 import ActivityList from "./components/activityList"
 
 const App: React.FC = () => {
-  const [colorGroups, setColorGroups] = React.useState<{
+  const [groups, setGroups] = React.useState<{
     [key: string]: BoardNode[];
   }>({});
 
   const [messages, setMessages] = React.useState<string[]>([]);
 
   const handleUpdateGrouping = async () => {
-    const updatedColorMap = await groupItemsByColor();
-    setColorGroups(updatedColorMap);
+    const updatedItemMap = await groupItems();
+    setGroups(updatedItemMap);
   };
 
   React.useEffect(() => {
     // WIP: structure overview feature
     async function fetchData() {
-      const colorMap = await groupItemsByColor();
-      setColorGroups(colorMap);
+      const itemMap = await groupItems();
+      setGroups(itemMap);
     }
 
     fetchData();
@@ -60,7 +60,7 @@ const App: React.FC = () => {
 
   return (
     <div className="grid">
-      <GroupingList groups={colorGroups} onUpdateGrouping={handleUpdateGrouping}/>
+      <GroupingList groups={groups} onUpdateGrouping={handleUpdateGrouping}/>
       <ActivityList messages={messages} />
     </div>
   );
