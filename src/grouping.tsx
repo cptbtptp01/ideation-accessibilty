@@ -26,7 +26,7 @@ let connectorSet: Set<string> = new Set(); // To store IDs of connector items
 
 // ------------------ Key Logic ------------------------------
 
-export async function groupItems() { // Need to specify the return type
+export async function groupItems() { // TODO: Specify the return type
     items = await miro.board.get(); // BoardNode[]
 
     // Processing: Clear all the containers for a fresh start
@@ -60,42 +60,134 @@ export async function groupItems() { // Need to specify the return type
     return finalClusters; // Return the structured clusters as JSON
 }
 
+/**
+ * Groups Miro board items into clusters based on predefined criteria including type, proximity, color, and other attributes.
+ * This function shows the entire clustering process, starting from fetching board items to returning a structured collection of item clusters.
+ * 
+ * Process Flow:
+ * 1. Fetch all items from the Miro board.
+ * 2. Initialize or reset data structures to hold the categorization and clustering of items.
+ * 3. Categorize items by their type (e.g., frame, group, floating) to form initial clusters.
+ *    - For floating items, apply spatial clustering based on distance to further refine clusters.
+ * 4. Evaluate each cluster's size and, if necessary, further break down this clusters into smaller groups based on color and type.
+ *    - Merge or adjust clusters based on evaluation criteria to form the final set of clusters.
+ * 
+ * @returns json, TBD...
+ */
+export async function groupItems() { // TODO: Specify the return type
+    items = await miro.board.get(); // Fetches all board items.
+
+    cleanAllContainers(); // Resets all containers for a fresh start.
+
+    preprocessingByType(); // Sorts items into initial categories based on type.
+
+    const initialClusters = clusterByType(); // Forms initial clusters based on item types.
+
+    // Initializes the array to hold the final clusters.
+    // Each cluster can be List[id] or List[List[id]].
+    // TODO: See if the data structure needs to be updated.
+    let finalClusters = []; 
+
+    // Further categorizes and evaluates the initial clusters
+    for (const cluster of initialClusters) {
+        if (cluster.size > threshold) {
+            const colorGroups = groupByColors(cluster); // Further categorizes items within a cluster by color.
+            const typeGroups = groupByTypes(cluster); // Further categorizes items within a cluster by type.
+            const result = evaluateClusters(colorGroups, typeGroups); // Evaluates and determine the final clusters to use.
+            finalClusters.push(...result);
+        } else {
+            finalClusters.push(cluster); // Smaller clusters are pushed directly without further categorization.
+        }
+    }
+
+    return finalClusters; // Returns the structured clusters.
+}
+
 // ------------------- Major Functions --------------------------
 
-function cleanAllContainers() {
+/**
+ * Implementation will reset global data structures such as frameSet, groupSet, etc.
+ */
+function cleanAllContainers(): void {
     // Clears all data structures to prepare for new clustering
 }
 
-function preprocessingByType() {
+/**
+ * Organizes board items into categorized containers based on their type.
+ * This might involve populating global sets and maps with item IDs.
+ */
+function preprocessingByType(): void {
     // Organizes items into sets and maps based on their type
 }
 
-function clusterByType() {
-    // Clusters items by their type, considering groups and frames as pre-defined clusters
+/**
+ * Clusters board items by their type, considering groups and frames as predefined clusters.
+ * Floating items are clustered based on proximity using clusterByDistance.
+ */
+function clusterByType(): void {
+    // for frame, group: no ops, default to be one cluster
+    // for floating: need to go through clusterByDistance() one to get clusters
 }
 
-function clusterByDistance() {
-    // Clusters items based on their spatial distance
+/**
+ * Clusters items based on spatial proximity.
+ * @returns A list of clusters, each cluster containing item IDs based on proximity.
+ */
+function clusterByDistance(): string[][] {
+    // Implementation will cluster floating items based on spatial proximity.
+    return []; // Placeholder return
 }
 
-function groupByColors(cluster) {
-    // Groups items within a cluster based on their color
+/**
+ * Groups items within a cluster based on their color.
+ * @param cluster An array of item IDs as strings.
+ * @returns A list of clusters, each cluster is a list of item IDs.
+ */
+function groupByColors(cluster: string[]): string[][] {
+    // Implementation here...
+    return [];
 }
 
-function groupByTypes(cluster) {
-    // Groups items within a cluster based on their type
+/**
+ * Groups items within a cluster based on their type.
+ * @param cluster An array of item IDs as strings.
+ * @returns A list of clusters, each cluster is a list of item IDs.
+ */
+function groupByTypes(cluster: string[]): string[][] {
+    // Implementation here...
+    return [];
 }
 
-function evaluateClusters(colorGroups, typeGroups) {
-    // Evaluates and merges clusters based on some criteria, returning the most relevant clusters
+/**
+ * Evaluates clusters based on some rule (TBD), returning the most relevant clusters.
+ * @param colorGroups A list of clusters, each cluster is a list of item IDs, grouped by color.
+ * @param typeGroups A list of clusters, each cluster is a list of item IDs, grouped by type.
+ * @returns The most relevant clusters after evaluation and possible merging.
+ */
+function evaluateClusters(colorGroups: string[][], typeGroups: string[][]): string[][] {
+    // Impl
+    // Maybe comparing, combining, or selecting clusters based on the evaluation rules
+    return [];
 }
 
 // ------------------- Helpers --------------------------
 
-function getColor(id: string) {
-    // Retrieves the color of an item by its ID
+/**
+ * Retrieves the color of an item by its ID.
+ * @param id The ID of the item as a string.
+ * @returns The color of the item as a string.
+ */
+function getColor(id: string): string {
+    // Impl
+    return "";
 }
 
-function getLocation(id: string) {
-    // Calculates and returns the central coordinate of an item
+/**
+ * Calculates and returns the central coordinate of an item.
+ * @param id The ID of the item as a string.
+ * @returns A tuple representing the central coordinate (x, y) of the item.
+ */
+function getLocation(id: string): [number, number] {
+    // Impl
+    return [0, 0];
 }
