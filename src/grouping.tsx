@@ -1,108 +1,101 @@
 import { BoardNode } from "@mirohq/websdk-types";
-import cluster from "cluster";
 import { GetColorName } from "hex-color-to-color-name";
 
-// build hierarchy
-async function collectItemsByFrame(items: BoardNode[]) {
-  // {frame1:[node1, node2,..], frame2: [node1, node2,...]}
-  const frameMap: { [key: string]: BoardNode[] } = {};
+/**
+ * ------------------------------------------------------------
+ * Data Structures to support the clustering logic
+ * Unused structures can be removed after evaluation
+ * ------------------------------------------------------------
+ */
 
-  for (const item of items) {
-    if (item.type === "frame" && item.childrenIds.length > 0) {
-      const children = await miro.board.get({ id: item.childrenIds });
-      frameMap[item.id] = children;
+// Global variable to make Miro items accessible throughout the file
+let items: BoardNode[];
+
+// Sets to store IDs of items based on their categorization
+let frameSet: Set<string> = new Set(); // To store IDs of items that belong to a frame
+let groupSet: Set<string> = new Set(); // To store IDs of items that belong to a group
+let floatingSet: Set<string> = new Set(); // To store IDs of items not in a frame or group
+
+// Maps and Sets to organize items by their characteristics
+let shapeMap: Map<string, Set<string>> = new Map(); // To store IDs of items with the same shape
+let stickyNoteSet: Set<string> = new Set(); // To store IDs of sticky note items
+let cardSet: Set<string> = new Set(); // To store IDs of card items
+let textSet: Set<string> = new Set(); // To store IDs of text items
+let connectorSet: Set<string> = new Set(); // To store IDs of connector items
+
+
+// ------------------ Key Logic ------------------------------
+
+export async function groupItems() { // Need to specify the return type
+    items = await miro.board.get(); // BoardNode[]
+
+    // Processing: Clear all the containers for a fresh start
+    cleanAllContainers(); // void function
+
+    // Preprocesin: Sort items into containers by type
+    preprocessingByType(); // void function
+
+    // Clustering by type (group / frame / floating) and distance (if applicable)
+    // output: an array of large clusters (may need to be further clustered)
+    // returns an array / a map of clusters - map key will be the summary of the cluster
+    clusterByType() {
+        // for frame, group: no ops, default to be one cluster
+        // for floating: need to go through clusterByDistance() one to get clusters
     }
-    // todo: handle nested cases
-  }
-  return frameMap;
-}
 
-function collectItemsByGroup() {
-  // impl
-}
-
-function collectItemsByVisual() {
-  // impl
-}
-
-function collectItemByDistance() {
-  // impl
-}
-
-// helper
-function determineColor(id: string, items: BoardNode[]) {
-  let color;
-  if (item.type === "card") {
-    color = GetColorName(item.style.cardTheme);
-  } else if (item.type === "shape") {
-    // cases: same border color & fill color, only have fill color/border color, different boarder color and fill color
-    color =
-      item.style.fillColor !== "transparent"
-        ? GetColorName(item.style.fillColor)
-        : GetColorName(item.style.borderColor); // hex
-  } else if (item.type === "sticky_note") {
-    color = item.style.fillColor;
-  } else if (item.type === "text") {
-    color = GetColorName(item.style.color);
-  } else {
-    color = "Uncolored";
-  }
-  return color; // colorname
-}
-
-// ------------------- Processing --------------------------
-export async function groupItems() {
-  const items = await miro.board.get(); // BoardNode[]
-
-  // Processing, clear all the containers
-  // void cleanAllContainers();
-
-  // Preprocesing, output: containers
-  // void preprocesingByType() {}
-
-  // Processing
-  // void processing() { // TBD
-  // cluster by distance
-  map < title, List[id] > groupingByDistance(items);
-
-  // }
-
-  // Return
-  // return a json
-
-  const itemMap: { [key: string]: BoardNode[] } = {};
-
-  items.forEach((item) => {
-    const color = determineColor(item);
-
-    if (color in itemMap) {
-      itemMap[color].push(item);
-    } else {
-      itemMap[color] = [item];
+    // Further categorized into smaller groups by grouping items by color and type
+    // output: the original one large cluster may become an array of smaller clusters
+    const finalClusters; // To hold the final clusters, data structure TBD
+    for (const cluster of clusters) {
+        if (cluster.size > threshold) {
+            const colorGroups = groupByColors(cluster);
+            const typeGroups = groupByTypes(cluster);
+            const result = evaluateClusters(colorGroups, typeGroups);
+            finalClusters.push(result);
+        } else {
+            finalClusters.push(cluster);
+        }
     }
-  });
 
-  items.forEach((item) => {
-    if (item.type === "shape") {
-      let shape = item.shape;
-
-      if (shape in itemMap) {
-        itemMap[shape].push(item);
-      } else {
-        itemMap[shape] = [item];
-      }
-    }
-  });
-
-  return itemMap;
+    return finalClusters; // Return the structured clusters as JSON
 }
 
-// ------------------- Helper --------------------------
+// ------------------- Major Functions --------------------------
 
-// Helper function
-// clusters[] preprocesingByDistance(array: [id1, id2, ...]) {}
-// return [[id1, id2, ...], [id7, id8, ...]]
+function cleanAllContainers() {
+    // Clears all data structures to prepare for new clustering
+}
 
-// Grouping by color
-// clusters[] preprocesingByColor(array: [id1, id2, ...]) {}
-// return {color: [id1, id2, ...], color: [id7, id8, ...]...}
+function preprocessingByType() {
+    // Organizes items into sets and maps based on their type
+}
+
+function clusterByType() {
+    // Clusters items by their type, considering groups and frames as pre-defined clusters
+}
+
+function clusterByDistance() {
+    // Clusters items based on their spatial distance
+}
+
+function groupByColors(cluster) {
+    // Groups items within a cluster based on their color
+}
+
+function groupByTypes(cluster) {
+    // Groups items within a cluster based on their type
+}
+
+function evaluateClusters(colorGroups, typeGroups) {
+    // Evaluates and merges clusters based on some criteria, returning the most relevant clusters
+}
+
+// ------------------- Helpers --------------------------
+
+function getColor(id: string) {
+    // Retrieves the color of an item by its ID
+}
+
+function getLocation(id: string) {
+    // Calculates and returns the central coordinate of an item
+}
