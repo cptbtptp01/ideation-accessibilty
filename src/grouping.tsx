@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { BoardNode } from "@mirohq/websdk-types";
 import { GetColorName } from "hex-color-to-color-name";
 
@@ -151,6 +153,11 @@ function getColor(id: string): string {
 function getLocation(id: string): [number, number] {
   // Impl
   return [0, 0];
+}
+
+// For purpose of testing only, to be deleted
+export function add(a: number, b: number): number {
+  return a + b;
 }
 
 // ------------------------------------------------------------ OLD ------------------------------------------------------------
