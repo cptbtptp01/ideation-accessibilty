@@ -14,6 +14,7 @@ let groupSet: Set<string> = new Set();
 let floatingSet: Set<string> = new Set();
 
 // Maps and Sets to organize items by their characteristics
+let colorMap:Map<string, Set<string>> = new Map(); // todo(hy) tbd
 let shapeMap: Map<string, Set<string>> = new Map();
 let stickyNoteSet: Set<string> = new Set();
 let cardSet: Set<string> = new Set();
@@ -105,11 +106,21 @@ function clusterByDistance(): string[][] {
 /**
  * Groups items within a cluster based on their color.
  * @param cluster An array of item IDs as strings.
- * @returns A list of clusters, each cluster is a list of item IDs.
+ * @returns a map of color to a list of item IDs.
  */
-function groupByColors(cluster: string[]): string[][] {
-  // Implementation here...
-  return [];
+export function groupByColors(cluster: string[]):Map<string, Set<string>>{
+  let colorMap: Map<string, Set<string>> = new Map();
+  cluster.forEach((item) => {
+    const color = getColor(item, cluster);
+    if (colorMap.has(color)) {
+      colorMap.get(color)!.add(item);
+    } else {
+      colorMap.set(color, new Set(item));
+    }
+    return colorMap;
+  })
+
+  return colorMap;
 }
 
 /**
@@ -141,9 +152,24 @@ function evaluateClusters(
  * Retrieves the color of an item by its ID.
  * @returns The color of the item as a string.
  */
-function getColor(id: string): string {
-  // Impl
-  return "";
+function getColor(id: string, items): string {
+  const item = items.find((item) => item.id === id);
+  let color;
+  if (item.type === "card") {
+    color = GetColorName(item.style.cardTheme);
+  } else if (item.type === "shape") {
+    color =
+      item.style.fillColor !== "transparent"
+        ? GetColorName(item.style.fillColor)
+        : GetColorName(item.style.borderColor);
+  } else if (item.type === "sticky_note") {
+    color = item.style.fillColor;
+  } else if (item.type === "text") {
+    color = GetColorName(item.style.color);
+  } else {
+    color = "Uncolored";
+  }
+  return color;
 }
 
 /**
@@ -185,26 +211,6 @@ async function collectItemsByFrame(items: BoardNode[]) {
     // todo: handle nested cases
   }
   return frameMap;
-}
-
-function determineColor(item: BoardNode) {
-  let color;
-  if (item.type === "card") {
-    color = GetColorName(item.style.cardTheme);
-  } else if (item.type === "shape") {
-    // cases: same border color & fill color, only have fill color/border color, different boarder color and fill color
-    color =
-      item.style.fillColor !== "transparent"
-        ? GetColorName(item.style.fillColor)
-        : GetColorName(item.style.borderColor); // hex
-  } else if (item.type === "sticky_note") {
-    color = item.style.fillColor;
-  } else if (item.type === "text") {
-    color = GetColorName(item.style.color);
-  } else {
-    color = "Uncolored";
-  }
-  return color;
 }
 
 export async function groupItems() {
