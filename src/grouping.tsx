@@ -150,7 +150,7 @@ function getColor(id: string): string {
  * Calculates and returns the central coordinate of an item.
  * @returns A tuple representing the central coordinate (x, y) of the item.
  */
-export function getLocation(id: string): [number, number] {
+export function getLocation(id: string, items): [number, number] {
   const item = items.find((item) => item.id === id);
   if (item) {
     return [item.x + item.width / 2, item.y + item.height / 2];
