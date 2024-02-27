@@ -152,8 +152,13 @@ function getColor(id: string): string {
  */
 export function getLocation(id: string, items): [number, number] {
   const item = items.find((item) => item.id === id);
-  if (item) {
+  if (item && item.width && item.height) {
     return [item.x + item.width / 2, item.y + item.height / 2];
+  } else if (item) {
+    console.error(
+      `getLocation: Item with ID ${id} does not have width or height property.`
+    );
+    return [0, 0];
   } else {
     console.error(`getLocation: Item with ID ${id} not found.`);
     return [0, 0];
