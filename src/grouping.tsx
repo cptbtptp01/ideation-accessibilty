@@ -155,7 +155,7 @@ export function getLocation(id: string, items): [number, number] {
   if (item) {
     return [item.x + item.width / 2, item.y + item.height / 2];
   } else {
-    console.error(`!!! getLocation: Item with ID ${id} not found.`);
+    console.error(`getLocation: Item with ID ${id} not found.`);
     return [0, 0];
   }
 }

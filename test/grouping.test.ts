@@ -40,3 +40,9 @@ describe("getLocation function", () => {
     expect(getLocation("123456789", mockItems1)).toEqual([125, 225]);
   });
 });
+
+describe("getLocation function", () => {
+  it("should return the center location of the item", () => {
+    expect(getLocation("987654321", mockItems1)).toEqual([0, 0]);
+  });
+});
