@@ -142,7 +142,7 @@ function evaluateClusters(
  * @returns The color of the item as a string.
  */
 function getColor(id: string): string {
-  // const
+  // Impl
   return "";
 }
 
@@ -155,7 +155,7 @@ export function getLocation(id: string): [number, number] {
   if (item) {
     return [item.x + item.width / 2, item.y + item.height / 2];
   } else {
-    console.error("Item not found");
+    console.error(`!!! getLocation: Item with ID ${id} not found.`);
     return [0, 0];
   }
 }
