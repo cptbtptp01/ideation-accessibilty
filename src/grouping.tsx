@@ -142,7 +142,7 @@ function evaluateClusters(
  * @returns The color of the item as a string.
  */
 function getColor(id: string): string {
-  // Impl
+  // const
   return "";
 }
 
@@ -150,9 +150,14 @@ function getColor(id: string): string {
  * Calculates and returns the central coordinate of an item.
  * @returns A tuple representing the central coordinate (x, y) of the item.
  */
-function getLocation(id: string): [number, number] {
-  // Impl
-  return [0, 0];
+export function getLocation(id: string): [number, number] {
+  const item = items.find((item) => item.id === id);
+  if (item) {
+    return [item.x + item.width / 2, item.y + item.height / 2];
+  } else {
+    console.error("Item not found");
+    return [0, 0];
+  }
 }
 
 // For purpose of testing only, to be deleted
