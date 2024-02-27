@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { BoardNode } from "@mirohq/websdk-types";
 import { GetColorName } from "hex-color-to-color-name";
 
@@ -148,9 +150,24 @@ function getColor(id: string): string {
  * Calculates and returns the central coordinate of an item.
  * @returns A tuple representing the central coordinate (x, y) of the item.
  */
-function getLocation(id: string): [number, number] {
-  // Impl
-  return [0, 0];
+export function getLocation(id: string, items): [number, number] {
+  const item = items.find((item) => item.id === id);
+  if (item && item.width && item.height) {
+    return [item.x + item.width / 2, item.y + item.height / 2];
+  } else if (item) {
+    console.error(
+      `getLocation: Item with ID ${id} does not have width or height property.`
+    );
+    return [0, 0];
+  } else {
+    console.error(`getLocation: Item with ID ${id} not found.`);
+    return [0, 0];
+  }
+}
+
+// For purpose of testing only, to be deleted
+export function add(a: number, b: number): number {
+  return a + b;
 }
 
 // ------------------------------------------------------------ OLD ------------------------------------------------------------
