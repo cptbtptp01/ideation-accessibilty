@@ -87,13 +87,22 @@ function preprocessingByType(): void {
 }
 
 /**
- * Clusters board items by their type, considering groups and frames as predefined clusters.
+ * Initial clustering
+ * Clusters board items by group, frame, floating, considering groups and frames as predefined clusters.
  * Floating items are clustered based on proximity using clusterByDistance.
  */
 function clusterByType(): void {
-  // for frame, group: no ops, default to be one cluster
-  // for floating: need to go through clusterByDistance() one to get clusters
-}
+  items.forEach((item) => {
+    if (item.type === "frame") {
+      frameSet.add(item.id);
+    } else if (item.type === "group") {
+      groupSet.add(item.id);
+    } else {
+      // tbd for future implementation
+      floatingSet.add(item.id);
+    }
+  });
+};
 
 /**
  * Clusters items based on spatial proximity.
