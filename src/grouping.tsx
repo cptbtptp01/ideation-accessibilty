@@ -14,7 +14,7 @@ let groupSet: Set<string> = new Set();
 let floatingSet: Set<string> = new Set();
 
 // Maps and Sets to organize items by their characteristics
-let colorMap:Map<string, Set<string>> = new Map(); // todo(hy) tbd
+let colorMap: Map<string, Set<string>> = new Map(); // todo(hy) tbd
 let shapeMap: Map<string, Set<string>> = new Map();
 let stickyNoteSet: Set<string> = new Set();
 let cardSet: Set<string> = new Set();
@@ -108,7 +108,7 @@ function clusterByDistance(): string[][] {
  * @param cluster An array of item IDs as strings.
  * @returns a map of color to a list of item IDs.
  */
-export function groupByColors(cluster: string[]):Map<string, Set<string>>{
+export function groupByColors(cluster: string[]): Map<string, Set<string>> {
   let colorMap: Map<string, Set<string>> = new Map();
   cluster.forEach((item) => {
     const color = getColor(item, cluster);
@@ -118,7 +118,7 @@ export function groupByColors(cluster: string[]):Map<string, Set<string>>{
       colorMap.set(color, new Set(item));
     }
     return colorMap;
-  })
+  });
 
   return colorMap;
 }
@@ -189,11 +189,6 @@ export function getLocation(id: string, items): [number, number] {
     console.error(`getLocation: Item with ID ${id} not found.`);
     return [0, 0];
   }
-}
-
-// For purpose of testing only, to be deleted
-export function add(a: number, b: number): number {
-  return a + b;
 }
 
 // ------------------------------------------------------------ OLD ------------------------------------------------------------
