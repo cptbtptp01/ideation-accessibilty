@@ -1,7 +1,7 @@
 import { BoardNode } from "@mirohq/websdk-types";
 
-const EPSILON = 0.01;
 const MAX_ITERATIONS = 100;
+const ESTIMATED_NODES_PER_CLUSTER = 3;
 
 interface DataPoint {
   // only used locally in kMeansClustering
@@ -12,35 +12,100 @@ interface DataPoint {
 
 // TODO: convert ids to dataPoints
 
+// TODO: Covert output to final output string[][]
+// Group items by cluster for the final output
+// let clusters: string[][] = new Array(k).fill(0).map(() => []);
+// assignments.forEach((clusterIndex, i) => {
+//   clusters[clusterIndex].push(dataPoints[i].id);
+// });
+
+function kMeansClusteringWrapper(
+  ids: string[],
+  items: BoardNode[]
+): string[][] {
+  // Get output from using k-means clustering with the elbow method (picking k)
+  const dataPoints = convertToClusterItems(ids, items);
+  const [centroids, assignments] = elbowMethod(dataPoints);
+
+  // Convert output to final output string[][]
+  const clusters: string[][] = new Array(centroids.length)
+    .fill(0)
+    .map(() => []);
+  assignments.forEach((clusterIndex, i) => {
+    clusters[clusterIndex].push(dataPoints[i].id);
+  });
+  return clusters;
+}
+
+/**
+ * Chooses the optimal k-means clustering using the elbow method.
+ * @returns the optimal number of clusters (k) as a number.
+ */
+function elbowMethod(dataPoints: DataPoint[]): [DataPoint[], number[]] {
+  let maxK = dataPoints.length / ESTIMATED_NODES_PER_CLUSTER + 1;
+  let distortions = [];
+
+  for (let k = 1; k <= maxK; k++) {
+    let [centroids, assignments] = kMeansClustering(dataPoints, k);
+    let distortion = getMeanSquaredDistance(dataPoints, centroids, assignments);
+    distortions.push(distortion);
+  }
+
+  let optimalK = 0;
+  let maxDistortionChange = 0;
+  for (let i = 1; i < distortions.length; i++) {
+    let distortionChange = Math.abs(distortions[i] - distortions[i - 1]);
+    if (distortionChange > maxDistortionChange) {
+      maxDistortionChange = distortionChange;
+      optimalK = i;
+    }
+  }
+
+  return kMeansClustering(dataPoints, optimalK);
+}
+
 /**
  * Implementation of k-means clustering that groups "nodes" into "k" clusters based on their (x, y) coordinates.
  */
-function kMeansClustering(dataPoints: DataPoint[], k: number): string[][] {
+function kMeansClustering(
+  dataPoints: DataPoint[],
+  k: number
+): [DataPoint[], number[]] {
   if (k <= 0 || dataPoints.length < k) {
-    return [];
+    return [[], []];
   }
 
   // Ramdomly initialize the centroids
   let centroids: DataPoint[] = initalizeCentroids(k, dataPoints);
   let assignments: number[] = new Array(dataPoints.length).fill(-1);
+  let iterations = MAX_ITERATIONS;
   let clusterChanged = 0;
 
   // Aiisgns each data point to the closest centroid
   do {
     clusterChanged = assignItemsToClusters(dataPoints, centroids, assignments);
     recalculateCentroids(dataPoints, centroids, assignments, k);
-  } while (clusterChanged > 0);
+  } while (clusterChanged > 0 && iterations-- > 0);
 
-  // Group items by cluster for the final output
-  let clusters: string[][] = new Array(k).fill(0).map(() => []);
-  assignments.forEach((clusterIndex, i) => {
-    clusters[clusterIndex].push(dataPoints[i].id);
-  });
-
-  return clusters;
+  return [centroids, assignments];
 }
 
-// ------------------------------------------ HELPERS ------------------------------------------
+/**
+ * Evaluates the k-means clustering by calculating the MSD of each data point to its assigned centroid.
+ */
+function getMeanSquaredDistance(
+  dataPoints: DataPoint[],
+  centroids: DataPoint[],
+  assignments: number[]
+): number {
+  let totalDistance = 0;
+  dataPoints.forEach((point, i) => {
+    let centroid = centroids[assignments[i]];
+    totalDistance += Math.pow(point.x - centroid.x, 2);
+    totalDistance += Math.pow(point.y - centroid.y, 2);
+  });
+  return totalDistance;
+}
 
 /**
  * Converts the IDs into an array of ClusterItems.
@@ -136,8 +201,10 @@ function recalculateCentroids(
   // get average i.e. new centroid of each cluster
   sums.forEach((sum, i) => {
     if (sum.count === 0) {
-      centroids[i].x = 0;
-      centroids[i].y = 0;
+      // Use a random point as the centroid if the cluster is empty
+      let randomIndex = Math.floor(Math.random() * dataPoints.length);
+      centroids[i].x = dataPoints[randomIndex].x;
+      centroids[i].y = dataPoints[randomIndex].y;
     } else {
       centroids[i].x = sum.x / sum.count;
       centroids[i].y = sum.y / sum.count;
