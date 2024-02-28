@@ -3,6 +3,8 @@
 import { BoardNode } from "@mirohq/websdk-types";
 import { GetColorName } from "hex-color-to-color-name";
 
+import data from "./data/grouping/stickyColor";
+
 // ------------------------------------------------------------ Data Structure ----------------------------------------------------------
 
 // Global variable to make Miro items accessible throughout the file
@@ -14,7 +16,6 @@ let groupSet: Set<string> = new Set();
 let floatingSet: Set<string> = new Set();
 
 // Maps and Sets to organize items by their characteristics
-let colorMap:Map<string, Set<string>> = new Map(); // todo(hy) tbd
 let shapeMap: Map<string, Set<string>> = new Map();
 let stickyNoteSet: Set<string> = new Set();
 let cardSet: Set<string> = new Set();
@@ -106,20 +107,19 @@ function clusterByDistance(): string[][] {
 /**
  * Groups items within a cluster based on their color.
  * @param cluster An array of item IDs as strings.
- * @returns a map of color to a list of item IDs.
+ * @returns A map of color to a list of item IDs.
  */
 export function groupByColors(cluster: string[]):Map<string, Set<string>>{
   let colorMap: Map<string, Set<string>> = new Map();
   cluster.forEach((item) => {
-    const color = getColor(item, cluster);
+    const color = getColor(item, items);
     if (colorMap.has(color)) {
       colorMap.get(color)!.add(item);
     } else {
-      colorMap.set(color, new Set(item));
+      colorMap.set(color, new Set([item]));
     }
     return colorMap;
-  })
-
+  });
   return colorMap;
 }
 
@@ -150,20 +150,21 @@ function evaluateClusters(
 
 /**
  * Retrieves the color of an item by its ID.
+ * @param id the node's id string
+ * @param items container stores all the BoardNode objects.
  * @returns The color of the item as a string.
  */
-function getColor(id: string, items): string {
+export function getColor(id: string, items): string {
   const item = items.find((item) => item.id === id);
   let color;
   if (item.type === "card") {
     color = GetColorName(item.style.cardTheme);
   } else if (item.type === "shape") {
-    color =
-      item.style.fillColor !== "transparent"
+    color = item.style.fillColor !== "transparent"
         ? GetColorName(item.style.fillColor)
-        : GetColorName(item.style.borderColor);
+        : "Uncolored";
   } else if (item.type === "sticky_note") {
-    color = item.style.fillColor;
+    color = getStickyNoteColor(item.style.fillColor);
   } else if (item.type === "text") {
     color = GetColorName(item.style.color);
   } else {
@@ -194,6 +195,15 @@ export function getLocation(id: string, items): [number, number] {
 // For purpose of testing only, to be deleted
 export function add(a: number, b: number): number {
   return a + b;
+}
+
+// helper function for sticky note color
+export function getStickyNoteColor(color:string):string {
+  for (const item of data) {
+    if (item.fillColor === color) {
+      return item.color;
+    }
+  }
 }
 
 // ------------------------------------------------------------ OLD ------------------------------------------------------------
