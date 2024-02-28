@@ -7,6 +7,7 @@ import { GetColorName } from "hex-color-to-color-name";
 
 // Global variable to make Miro items accessible throughout the file
 let items: BoardNode[];
+export { items };
 
 // Sets to store IDs of items based on their categorization
 let frameSet: Set<string> = new Set();
@@ -98,7 +99,7 @@ function clusterByType(): void {
  * Clusters items based on spatial proximity.
  * @returns A list of clusters, each cluster containing item IDs based on proximity.
  */
-function clusterByDistance(): string[][] {
+function clusterByDistance(initialCluster: string[]): string[][] {
   // Implementation will cluster floating items based on spatial proximity.
   return []; // Placeholder return
 }
@@ -172,6 +173,7 @@ function getColor(id: string, items): string {
   return color;
 }
 
+// TODO - zqy: Duplicate function, to be removed
 /**
  * Calculates and returns the central coordinate of an item.
  * @returns A tuple representing the central coordinate (x, y) of the item.
