@@ -3,6 +3,8 @@
 import { BoardNode } from "@mirohq/websdk-types";
 import { GetColorName } from "hex-color-to-color-name";
 
+import data from "./data/grouping/stickyColor";
+
 // ------------------------------------------------------------ Data Structure ----------------------------------------------------------
 
 // Global variable to make Miro items accessible throughout the file
@@ -15,7 +17,6 @@ let groupSet: Set<string> = new Set();
 let floatingSet: Set<string> = new Set();
 
 // Maps and Sets to organize items by their characteristics
-let colorMap: Map<string, Set<string>> = new Map(); // todo(hy) tbd
 let shapeMap: Map<string, Set<string>> = new Map();
 let stickyNoteSet: Set<string> = new Set();
 let cardSet: Set<string> = new Set();
@@ -87,12 +88,21 @@ function preprocessingByType(): void {
 }
 
 /**
- * Clusters board items by their type, considering groups and frames as predefined clusters.
+ * Initial clustering
+ * Clusters board items by group, frame, floating, considering groups and frames as predefined clusters.
  * Floating items are clustered based on proximity using clusterByDistance.
  */
 function clusterByType(): void {
-  // for frame, group: no ops, default to be one cluster
-  // for floating: need to go through clusterByDistance() one to get clusters
+  items.forEach((item) => {
+    if (item.type === "frame") {
+      frameSet.add(item.id);
+    } else if (item.type === "group") {
+      groupSet.add(item.id);
+    } else {
+      // tbd for future implementation
+      floatingSet.add(item.id);
+    }
+  });
 }
 
 /**
@@ -107,20 +117,19 @@ function clusterByDistance(initialCluster: string[]): string[][] {
 /**
  * Groups items within a cluster based on their color.
  * @param cluster An array of item IDs as strings.
- * @returns a map of color to a list of item IDs.
+ * @returns A map of color to a list of item IDs.
  */
 export function groupByColors(cluster: string[]): Map<string, Set<string>> {
   let colorMap: Map<string, Set<string>> = new Map();
   cluster.forEach((item) => {
-    const color = getColor(item, cluster);
+    const color = getColor(item, items);
     if (colorMap.has(color)) {
       colorMap.get(color)!.add(item);
     } else {
-      colorMap.set(color, new Set(item));
+      colorMap.set(color, new Set([item]));
     }
     return colorMap;
   });
-
   return colorMap;
 }
 
@@ -151,9 +160,11 @@ function evaluateClusters(
 
 /**
  * Retrieves the color of an item by its ID.
+ * @param id the node's id string
+ * @param items container stores all the BoardNode objects.
  * @returns The color of the item as a string.
  */
-function getColor(id: string, items): string {
+export function getColor(id: string, items): string {
   const item = items.find((item) => item.id === id);
   let color;
   if (item.type === "card") {
@@ -162,9 +173,9 @@ function getColor(id: string, items): string {
     color =
       item.style.fillColor !== "transparent"
         ? GetColorName(item.style.fillColor)
-        : GetColorName(item.style.borderColor);
+        : "Uncolored";
   } else if (item.type === "sticky_note") {
-    color = item.style.fillColor;
+    color = getStickyNoteColor(item.style.fillColor);
   } else if (item.type === "text") {
     color = GetColorName(item.style.color);
   } else {
