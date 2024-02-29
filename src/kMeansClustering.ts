@@ -1,4 +1,6 @@
+//@ts-nocheck
 import { BoardNode } from "@mirohq/websdk-types";
+import { items } from "./grouping";
 
 const MAX_ITERATIONS = 100;
 const ESTIMATED_NODES_PER_CLUSTER = 3;
@@ -23,7 +25,7 @@ function kMeansClusteringWrapper(
   ids: string[],
   items: BoardNode[]
 ): string[][] {
-  // Get output from using k-means clustering with the elbow method (picking k)
+  // Get output using k-means clustering with the elbow method (picking optimal k)
   const dataPoints = convertToClusterItems(ids, items);
   const [centroids, assignments] = elbowMethod(dataPoints);
 
@@ -125,17 +127,22 @@ function convertToClusterItems(ids: string[], items: BoardNode[]): DataPoint[] {
 /**
  * Calculates and returns the central coordinates of an item.
  */
-export function getLocation(id: string, items: BoardNode[]): [number, number] {
+export function getLocation(id: string, items: any): [number, number] {
   const item = items.find((item) => item.id === id);
-  if (item && item.width && item.height) {
-    return [item.x + item.width / 2, item.y + item.height / 2];
+  if (item && item.x && item.y && item.width && item.height) {
+    const centerX = item.x + item.width / 2;
+    const centerY = item.y + item.height / 2;
+    const roundedX = Number(centerX.toFixed(2));
+    const roundedY = Number(centerY.toFixed(2));
+    console.error(`[${roundedX}, ${roundedY}]`);
+    return [roundedX, roundedY];
   } else if (item) {
-    console.error(
+    console.log(
       `getLocation: Item with ID ${id} does not have 'width' or 'height' properties.`
     );
     return [0, 0];
   } else {
-    console.error(`getLocation: Item with ID ${id} not found.`);
+    console.log(`getLocation: Item with ID ${id} not found.`);
     return [0, 0];
   }
 }

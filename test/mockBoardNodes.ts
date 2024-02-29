@@ -103,27 +103,22 @@ export const mockShape3 = {
 
 export const mockStickyNote1 = {
   type: "sticky_note",
-  shape: "square",
-  content: "<p>sticker1</p>",
-  style: {
-    fillColor: "light_yellow",
-    textAlign: "center",
-    textAlignVertical: "middle",
+  attributes: {
+    text: "<p>ssss</p>",
+    style: {
+      backgroundColor: "cyan",
+      textAlign: "center",
+      textAlignVertical: "middle",
+    },
+    geometry: {
+      x: 4869.786152365592,
+      y: 2504.686165346242,
+      width: 762.1591909669559,
+      height: 873.2276157812358,
+    },
+    parentId: null,
   },
-  tagIds: [],
-  id: "3458764580516885999",
-  parentId: null,
-  origin: "center",
-  relativeTo: "canvas_center",
-  createdAt: "2024-02-27T23:01:04.686Z",
-  createdBy: "3458764575728178245",
-  modifiedAt: "2024-02-28T04:43:06.560Z",
-  modifiedBy: "3458764575728178245",
-  connectorIds: [],
-  x: -2712.8002239449133,
-  y: 1165.070165330662,
-  width: 212.93,
-  height: 243.96,
+  id: "3458764579564312953",
 };
 
 export const mockStickyNote2 = {
@@ -149,4 +144,67 @@ export const mockStickyNote2 = {
   y: 1409.030165330662,
   width: 212.93,
   height: 243.96,
+};
+
+export const mockStickyNote3 = {
+  type: "sticky_note", // check
+  shape: "square",
+  content: "",
+  style: {
+    fillColor: "yellow",
+    textAlign: "center",
+    textAlignVertical: "middle",
+  },
+  tagIds: [],
+  id: "101", // check
+  parentId: null,
+  origin: "center",
+  relativeTo: "canvas_center",
+  createdAt: "2024-02-19T23:23:31.832Z",
+  createdBy: "3458764575728178245",
+  modifiedAt: "2024-02-26T01:23:51.819Z",
+  modifiedBy: "3458764561136524777",
+  connectorIds: [],
+  x: 100.0, // check
+  y: 200.0, // check
+  width: 39.99999, // check
+  height: 50.00008, // check
+};
+
+export const mockConnector1 = {
+  type: "connector", // check
+  id: "102", // check
+  style: {
+    startStrokeCap: "none",
+    endStrokeCap: "rounded_stealth",
+    strokeStyle: "normal",
+    strokeWidth: 2,
+    strokeColor: "#333333",
+    color: "#1a1a1a",
+    textOrientation: "horizontal",
+  },
+  start: {
+    item: "123456789",
+    position: {
+      x: 1,
+      y: 0.5,
+    },
+    snapTo: "right",
+  },
+  end: {
+    item: "anotherItemId",
+    position: {
+      x: 0,
+      y: 0.5,
+    },
+    snapTo: "left",
+  },
+  captions: [],
+  parentId: null,
+  origin: "center",
+  relativeTo: "canvas_center",
+  createdAt: "2024-02-26T07:13:30.464Z",
+  createdBy: "3458764561136524777",
+  modifiedAt: "2024-02-26T07:13:30.464Z",
+  modifiedBy: "3458764561136524777",
 };

@@ -1,47 +1,22 @@
-import { getLocation } from "../src/grouping";
+import { getLocation } from "../src/kMeansClustering";
+import { mockStickyNote3, mockConnector1 } from "./mockBoardNodes";
 
-// TODO: to be refactored into mockBoardNodes.ts
-const mockItems = [
-  {
-    type: "text",
-    content: "<p><strong>Example Text</strong></p>",
-    id: "123456789",
-    x: 100,
-    y: 200,
-    width: 50,
-    height: 80,
-    rotation: 0,
-  },
-  {
-    type: "connector",
-    id: "147258369",
-    start: {
-      item: "123",
-    },
-    end: {
-      item: "456",
-      snapTo: "left",
-    },
-    captions: [],
-    parentId: null,
-    origin: "center",
-  },
-];
+const mockItems1 = [mockStickyNote3, mockConnector1];
 
 describe("getLocation function", () => {
   it("should return the center location of the item", () => {
-    expect(getLocation("123456789", mockItems)).toEqual([125, 240]);
+    expect(getLocation("101", mockItems1)).toEqual([120.0, 225.0]);
   });
 });
 
 describe("getLocation function", () => {
   it("should return the center location of the item", () => {
-    expect(getLocation("147258369", mockItems)).toEqual([0, 0]);
+    expect(getLocation("102", mockItems1)).toEqual([0, 0]);
   });
 });
 
 describe("getLocation function", () => {
   it("should return the center location of the item", () => {
-    expect(getLocation("111111111", mockItems)).toEqual([0, 0]);
+    expect(getLocation("999", mockItems1)).toEqual([0, 0]);
   });
 });
