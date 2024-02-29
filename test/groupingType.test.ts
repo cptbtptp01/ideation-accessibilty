@@ -1,9 +1,11 @@
 import { emptyFrame, group, mockShape1, mockStickyNote1 } from "./mockBoardNodes";
 
+// mock actual global variables
 const frameSet : Set<string> = new Set();
 const groupSet : Set<string> = new Set();
 const floatingSet : Set<string> = new Set();
 
+// mock actual function
 function clusterByType(items: any[]): Set<string>[] {
     let clusters : Set<string>[] = [];
     items.forEach((item) => {
@@ -32,7 +34,7 @@ describe('clusterByType', () => {
 });
 
 describe('clusterByType', () => {
-    it('should group items by type (gorup, frame. floating)', () => {
+    it('should group items by type (group, frame. floating)', () => {
         const items = [emptyFrame, group, mockShape1, mockStickyNote1];
         const clusters = clusterByType(items);
         expect(clusters[0].size).toBe(1);
