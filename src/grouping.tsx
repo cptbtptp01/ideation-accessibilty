@@ -90,8 +90,11 @@ function preprocessingByType(): void {
  * Initial clustering
  * Clusters board items by group, frame, floating, considering groups and frames as predefined clusters.
  * Floating items are clustered based on proximity using clusterByDistance.
+ * @updates frameSet, groupSet, floatingSet
+ * @returns A list of clusters, each cluster containing item IDs based on type.
  */
-function clusterByType(): void {
+function clusterByType(): Set<string>[] {
+  let clusters : Set<string>[] = [];
   items.forEach((item) => {
     if (item.type === "frame") {
       frameSet.add(item.id);
@@ -102,6 +105,9 @@ function clusterByType(): void {
       floatingSet.add(item.id);
     }
   });
+  // add frameSet, groupSet, floatingSet to a list
+  clusters.push(frameSet, groupSet, floatingSet);
+  return clusters;
 };
 
 /**
@@ -115,10 +121,10 @@ function clusterByDistance(): string[][] {
 
 /**
  * Groups items within a cluster based on their color.
- * @param cluster An array of item IDs as strings.
+ * @param cluster A set of item IDs as strings.
  * @returns A map of color to a list of item IDs.
  */
-export function groupByColors(cluster: string[]):Map<string, Set<string>>{
+export function groupByColors(cluster: Set<string>):Map<string, Set<string>>{
   let colorMap: Map<string, Set<string>> = new Map();
   cluster.forEach((item) => {
     const color = getColor(item, items);
