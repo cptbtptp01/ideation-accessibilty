@@ -16,6 +16,7 @@ let groupSet: Set<string> = new Set();
 let floatingSet: Set<string> = new Set();
 
 // Maps and Sets to organize items by their characteristics
+let imageSet: Set<string> = new Set();
 let shapeMap: Map<string, Set<string>> = new Map();
 let stickyNoteSet: Set<string> = new Set();
 let cardSet: Set<string> = new Set();
@@ -213,6 +214,18 @@ export function getStickyNoteColor(color:string):string {
       return item.color;
     }
   }
+}
+
+// return url of the image sr
+export async function getImage(id:string):string {
+  const item = items.find((item) => item.id === id);
+  const file = await item.getFile(); // from miro
+
+  const url = URL.createObjectURL(file);
+
+  const image = document.createElement('img');
+  image.src = url;
+  return url;
 }
 
 // ------------------------------------------------------------ OLD ------------------------------------------------------------
