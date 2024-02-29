@@ -5,7 +5,7 @@ import { items } from "./grouping";
 const MAX_ITERATIONS = 100;
 const ESTIMATED_NODES_PER_CLUSTER = 3;
 
-interface DataPoint {
+export interface DataPoint {
   // only used locally in kMeansClustering
   id: string;
   x: number;
@@ -26,7 +26,7 @@ function kMeansClusteringWrapper(
   items: BoardNode[]
 ): string[][] {
   // Get output using k-means clustering with the elbow method (picking optimal k)
-  const dataPoints = convertToClusterItems(ids, items);
+  const dataPoints = convertToDataPoints(ids, items);
   const [centroids, assignments] = elbowMethod(dataPoints);
 
   // Convert output to final output string[][]
@@ -110,44 +110,6 @@ function getMeanSquaredDistance(
 }
 
 /**
- * Converts the IDs into an array of ClusterItems.
- */
-function convertToClusterItems(ids: string[], items: BoardNode[]): DataPoint[] {
-  const res: DataPoint[] = [];
-  for (let i = 0; i < ids.length; i++) {
-    const id = ids[i];
-    const location: [number, number] = getLocation(id, items);
-    if (location[0] !== 0 || location[1] !== 0) {
-      res.push({ id, x: location[0], y: location[1] });
-    }
-  }
-  return res;
-}
-
-/**
- * Calculates and returns the central coordinates of an item.
- */
-export function getLocation(id: string, items: any): [number, number] {
-  const item = items.find((item) => item.id === id);
-  if (item && item.x && item.y && item.width && item.height) {
-    const centerX = item.x + item.width / 2;
-    const centerY = item.y + item.height / 2;
-    const roundedX = Number(centerX.toFixed(2));
-    const roundedY = Number(centerY.toFixed(2));
-    console.error(`[${roundedX}, ${roundedY}]`);
-    return [roundedX, roundedY];
-  } else if (item) {
-    console.log(
-      `getLocation: Item with ID ${id} does not have 'width' or 'height' properties.`
-    );
-    return [0, 0];
-  } else {
-    console.log(`getLocation: Item with ID ${id} not found.`);
-    return [0, 0];
-  }
-}
-
-/**
  * Randomly selects "k" data points to be the initial centroids.
  */
 function initalizeCentroids(k: number, dataPoints: DataPoint[]): DataPoint[] {
@@ -217,4 +179,42 @@ function recalculateCentroids(
       centroids[i].y = sum.y / sum.count;
     }
   });
+}
+
+/**
+ * Converts the IDs into an array of ClusterItems.
+ */
+export function convertToDataPoints(ids: string[], items: any): DataPoint[] {
+  const res: DataPoint[] = [];
+  for (let i = 0; i < ids.length; i++) {
+    const id = ids[i];
+    const location: [number, number] = getLocation(id, items);
+    if (location[0] !== 0 || location[1] !== 0) {
+      res.push({ id, x: location[0], y: location[1] });
+    }
+  }
+  return res;
+}
+
+/**
+ * Calculates and returns the central coordinates of an item.
+ */
+export function getLocation(id: string, items: any): [number, number] {
+  const item = items.find((item) => item.id === id);
+  if (item && item.x && item.y && item.width && item.height) {
+    const centerX = item.x + item.width / 2;
+    const centerY = item.y + item.height / 2;
+    const roundedX = Number(centerX.toFixed(2));
+    const roundedY = Number(centerY.toFixed(2));
+    console.error(`[${roundedX}, ${roundedY}]`);
+    return [roundedX, roundedY];
+  } else if (item) {
+    console.log(
+      `getLocation: Item with ID ${id} does not have 'width' or 'height' properties.`
+    );
+    return [0, 0];
+  } else {
+    console.log(`getLocation: Item with ID ${id} not found.`);
+    return [0, 0];
+  }
 }
