@@ -5,7 +5,7 @@ import { mockStickyNote1, mockStickyNote2 } from './mockBoardNodes';
 // test groupByColor function
 // given we are declaring global variables in the actual code,
 // solution for testing is to mock the function logic within the test file
-function groupByColor(cluster: string[], items: any) {
+function groupByColor(cluster: Set<string>, items: any) {
     let colorMap: Map<string, Set<string>> = new Map();
     cluster.forEach((item) => {
         const color = getColor(item, items);
@@ -28,7 +28,7 @@ function groupByColor(cluster: string[], items: any) {
 describe('groupByColor', () => {
     it('should group items by color', () => {
         const items = [mockShape1, mockShape2, mockShape3, mockStickyNote1, mockStickyNote2];
-        const cluster = [mockShape1.id, mockShape2.id, mockShape3.id, mockStickyNote1.id, mockStickyNote2.id];
+        const cluster = new Set([mockShape1.id, mockShape2.id, mockShape3.id, mockStickyNote1.id, mockStickyNote2.id]);
         const colorMap = groupByColor(cluster, items);
         expect(colorMap.get('Lightning Yellow')!.size).toBe(2);
         expect(colorMap.get('Uncolored')!.size).toBe(1);

@@ -1,5 +1,38 @@
 /* This file is a mock of the board nodes data structure. It is used to test the grouping functions. */
 
+// frame - empty
+export const emptyFrame = {
+    type: "frame",
+    title: "Frame 1",
+    childrenIds: [],
+    style: {
+        fillColor: "#ffffff"
+    },
+    id: "3458764580673875996",
+    parentId: null,
+    origin: "center",
+    relativeTo: "canvas_center",
+    createdAt: new Date("2024-02-29T03:31:14.020Z"),
+    createdBy: "3458764575728178245",
+    modifiedAt: new Date("2024-02-29T03:31:26.361Z"),
+    modifiedBy: "3458764575728178245",
+    x: -2933.759775307095,
+    y: 2495.4418699295593,
+    height: 791,
+    width: 1439.2202166064983,
+    showContent: true
+};
+
+// group - groups cannot be empty
+export const group = {
+    type: "group",
+    itemsIds: [
+        "3458764580516886689",
+        "3458764580516886705"
+    ],
+    id: "3458764580673938034"
+};
+
 // shape - round rec - content - fill - border
 export const mockShape1 = {
     type: "shape",
