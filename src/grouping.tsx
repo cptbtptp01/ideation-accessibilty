@@ -16,6 +16,7 @@ let groupSet: Set<string> = new Set();
 let floatingSet: Set<string> = new Set();
 
 // Maps and Sets to organize items by their characteristics
+let imageSet: Set<string> = new Set();
 let shapeMap: Map<string, Set<string>> = new Map();
 let stickyNoteSet: Set<string> = new Set();
 let cardSet: Set<string> = new Set();
@@ -87,26 +88,34 @@ function preprocessingByType(): void {
 }
 
 /**
- * Initial clustering
  * Clusters board items by group, frame, floating, considering groups and frames as predefined clusters.
  * Floating items are clustered based on proximity using clusterByDistance.
- * @updates frameSet, groupSet, floatingSet
- * @returns A list of clusters, each cluster containing item IDs based on type.
+ * @updates imageSet, shapeMap, stickyNoteSet, cardSet, textSet, connectorSet
+ * @returns A list of clusters, each cluster containing item IDs based on type. TBD TODO [cluster, cluster, cluster]
  */
 function clusterByType(): Set<string>[] {
-  let clusters : Set<string>[] = [];
+  let clusters : [] = [];
   items.forEach((item) => {
-    if (item.type === "frame") {
-      frameSet.add(item.id);
-    } else if (item.type === "group") {
-      groupSet.add(item.id);
-    } else {
-      // tbd for future implementation
-      floatingSet.add(item.id);
+    if (item.type === "image") {
+      imageSet.add(item.id);
+    } else if (item.type === "shape") {
+      if (shapeMap.has(item.style.shapeType)) {
+        shapeMap.get(item.shape)!.add(item.id);
+      } else {
+        shapeMap.set(item.shape, new Set([item.id]));
+      }
+    } else if (item.type === "sticky_note") {
+      stickyNoteSet.add(item.id);
+    } else if (item.type === "card") {
+      cardSet.add(item.id);
+    } else if (item.type === "text") {
+      textSet.add(item.id);
+    } else if (item.type === "connector") {
+      connectorSet.add(item.id);
     }
   });
-  // add frameSet, groupSet, floatingSet to a list
-  clusters.push(frameSet, groupSet, floatingSet);
+  // todo: do we need to make clusters as a map, e.g. "image": imageSet, "shape": shapeMap, etc.
+  clusters.push(imageSet, shapeMap, stickyNoteSet, cardSet, textSet, connectorSet);
   return clusters;
 };
 

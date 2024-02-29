@@ -1,3 +1,5 @@
+// to be updated after confirm the function
+
 import { emptyFrame, group, mockShape1, mockStickyNote1 } from "./mockBoardNodes";
 
 // mock actual global variables
