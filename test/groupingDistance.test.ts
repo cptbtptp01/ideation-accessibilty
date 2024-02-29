@@ -2,6 +2,10 @@ import {
   DataPoint,
   convertToDataPoints,
   getLocation,
+  recalculateCentroids,
+  // elbowMethod,
+  // kMeansClustering,
+  // recalculateCentroids,
 } from "../src/kMeansClustering";
 
 const testConnector1 = {
@@ -119,3 +123,64 @@ describe("convertToDataPoints function", () => {
     expect(convertToDataPoints(ids, mockItems2)).toEqual(res);
   });
 });
+
+const dp1: DataPoint = { id: "1001", x: 66.63, y: 66.02 };
+const dp2: DataPoint = { id: "1002", x: 74.67, y: 71.53 };
+const dp3: DataPoint = { id: "1003", x: 73.71, y: 70.52 };
+const dp4: DataPoint = { id: "1004", x: 71.28, y: 67.28 };
+const dp5: DataPoint = { id: "1005", x: 42.83, y: 46.69 };
+const dp6: DataPoint = { id: "1006", x: 46.38, y: 41.5 };
+const dp7: DataPoint = { id: "1007", x: 43.93, y: 48.3 };
+const dp8: DataPoint = { id: "1008", x: 43.4, y: 44.2 };
+const dp9: DataPoint = { id: "1009", x: 44.9, y: 49.45 };
+const dp10: DataPoint = { id: "1010", x: 15.2, y: 14.45 };
+const dp11: DataPoint = { id: "1011", x: 13.71, y: 18.75 };
+const dp12: DataPoint = { id: "1012", x: 15.15, y: 12.87 };
+const dp13: DataPoint = { id: "1013", x: 12.08, y: 12.85 };
+const dp14: DataPoint = { id: "1014", x: 16.98, y: 17.03 };
+const dp15: DataPoint = { id: "1015", x: 14.7, y: 20.3 };
+
+const dataPoints = [
+  dp1,
+  dp2,
+  dp3,
+  dp4,
+  dp5,
+  dp6,
+  dp7,
+  dp8,
+  dp9,
+  dp10,
+  dp11,
+  dp12,
+  dp13,
+  dp14,
+  dp15,
+];
+
+describe("recalculateCentroids function", () => {
+  it("recalculateCentroids normal case", () => {
+    const dataPointsDeepCopy = dataPoints.map((dp) => ({ ...dp }));
+    const initialCentroids: DataPoint[] = [dp2, dp7, dp14];
+    const centroids = initialCentroids.map((c) => ({ ...c }));
+    const assignments = [0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2];
+    const k = 3;
+
+    // res
+    const resDp2: DataPoint = { id: "1002", x: 71.57, y: 68.84 };
+    const resDp7: DataPoint = { id: "1007", x: 44.29, y: 46.03 };
+    const resDp14: DataPoint = { id: "1014", x: 14.64, y: 16.04 };
+    const res: DataPoint[] = [resDp2, resDp7, resDp14];
+
+    // void function, update centroids in place and does not change dataPoints
+    recalculateCentroids(dataPoints, centroids, assignments, k);
+    expect(centroids).toEqual(res);
+    expect(dataPoints).toEqual(dataPointsDeepCopy);
+  });
+});
+
+// describe("elbowMethod function", () => {
+//   it("Should return the optimal number of clusters (k) as a number", () => {
+//     expect(elbowMethod(dataPoints)).toEqual(3);
+//   });
+// });

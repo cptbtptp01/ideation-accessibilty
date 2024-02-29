@@ -3,7 +3,7 @@ import { BoardNode } from "@mirohq/websdk-types";
 import { items } from "./grouping";
 
 const MAX_ITERATIONS = 100;
-const REPEATING_TIMES_PER_K = 5;
+const REPEATING_TIMES_PER_K = 100;
 const ESTIMATED_NODES_PER_CLUSTER = 3;
 
 export interface DataPoint {
@@ -26,7 +26,10 @@ function kMeansClusteringWrapper(
   const dataPoints = convertToDataPoints(ids, items);
 
   // Get output using k-means clustering with the elbow method (picking optimal k)
-  const [centroids, assignments] = elbowMethod(dataPoints);
+  const optimalK = elbowMethod(dataPoints);
+
+  // Run k-means for n times using the optimal k
+  const [centroids, assignments] = runKMeansForNTimes(dataPoints, optimalK);
 
   // Convert output to final output string[][]
   const clusters: string[][] = new Array(centroids.length)
@@ -42,13 +45,14 @@ function kMeansClusteringWrapper(
  * Chooses the optimal k-means clustering using the elbow method.
  * @returns the optimal number of clusters (k) as a number.
  */
-function elbowMethod(dataPoints: DataPoint[]): [DataPoint[], number[]] {
+export function elbowMethod(dataPoints: DataPoint[]): number {
   let maxK = dataPoints.length / ESTIMATED_NODES_PER_CLUSTER + 1;
   let distortions = [];
 
-  for (let k = 1; k <= maxK; k++) {
+  for (let k = 2; k <= maxK; k++) {
     let [centroids, assignments] = runKMeansForNTimes(dataPoints, k);
     let distortion = getMeanSquaredDistance(dataPoints, centroids, assignments);
+    // console.error(`!!! k=${k}, distortion=${distortion}`);
     distortions.push(distortion);
   }
 
@@ -58,11 +62,17 @@ function elbowMethod(dataPoints: DataPoint[]): [DataPoint[], number[]] {
     let distortionChange = Math.abs(distortions[i] - distortions[i - 1]);
     if (distortionChange > maxDistortionChange) {
       maxDistortionChange = distortionChange;
-      optimalK = i;
+      optimalK = i + 2;
     }
   }
 
-  return kMeansClustering(dataPoints, optimalK);
+  // console.error(`!!! print datapoints`);
+  // print the x, y tuple for dataPoints
+  // for (let i = 0; i < dataPoints.length; i++) {
+  //   console.error(`!!! print ${dataPoints[i].x}, ${dataPoints[i].y}`);
+  // }
+
+  return optimalK;
 }
 
 /**
@@ -79,7 +89,7 @@ function runKMeansForNTimes(
 
   for (let i = 0; i < n; i++) {
     let [centroids, assignments] = kMeansClustering(dataPoints, k);
-    let totalDistance = calculateTotalDistance(
+    let totalDistance = getMeanSquaredDistance(
       dataPoints,
       centroids,
       assignments
@@ -98,7 +108,7 @@ function runKMeansForNTimes(
 /**
  * Implementation of k-means clustering that groups "nodes" into "k" clusters based on their (x, y) coordinates.
  */
-function kMeansClustering(
+export function kMeansClustering(
   dataPoints: DataPoint[],
   k: number
 ): [DataPoint[], number[]] {
@@ -114,8 +124,21 @@ function kMeansClustering(
 
   // Aiisgns each data point to the closest centroid
   do {
+    // print centroids as (id, x, y) pairs
+    // for (let i = 0; i < centroids.length; i++) {
+    //   console.error(
+    //     `!!! print centroids ${centroids[i].id}, ${centroids[i].x}, ${centroids[i].y}`
+    //   );
+    // }
+
     clusterChanged = assignItemsToClusters(dataPoints, centroids, assignments);
     recalculateCentroids(dataPoints, centroids, assignments, k);
+
+    // for (let i = 0; i < centroids.length; i++) {
+    //   console.error(
+    //     `!!! print centroids ${centroids[i].id}, ${centroids[i].x}, ${centroids[i].y}`
+    //   );
+    // }
   } while (clusterChanged > 0 && iterations-- > 0);
 
   return [centroids, assignments];
@@ -142,7 +165,7 @@ function getMeanSquaredDistance(
  * Randomly selects "k" data points to be the initial centroids.
  */
 function initalizeCentroids(k: number, dataPoints: DataPoint[]): DataPoint[] {
-  let shuffled = [...dataPoints].sort(() => 0.5 - Math.random());
+  let shuffled = dataPoints.map((dp) => ({ ...dp })).sort(() => Math.random());
   return shuffled.slice(0, k);
 }
 
@@ -182,7 +205,7 @@ function assignItemsToClusters(
 /**
  * Calculates the new centroids based on the updated assignments.
  */
-function recalculateCentroids(
+export function recalculateCentroids(
   dataPoints: DataPoint[],
   centroids: DataPoint[],
   assignments: number[],
@@ -204,8 +227,8 @@ function recalculateCentroids(
       centroids[i].x = dataPoints[randomIndex].x;
       centroids[i].y = dataPoints[randomIndex].y;
     } else {
-      centroids[i].x = sum.x / sum.count;
-      centroids[i].y = sum.y / sum.count;
+      centroids[i].x = Number((sum.x / sum.count).toFixed(2));
+      centroids[i].y = Number((sum.y / sum.count).toFixed(2));
     }
   });
 }
