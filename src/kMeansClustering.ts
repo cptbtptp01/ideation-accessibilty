@@ -3,6 +3,7 @@ import { BoardNode } from "@mirohq/websdk-types";
 import { items } from "./grouping";
 
 const MAX_ITERATIONS = 100;
+const REPEATING_TIMES_PER_K = 5;
 const ESTIMATED_NODES_PER_CLUSTER = 3;
 
 export interface DataPoint {
@@ -12,21 +13,19 @@ export interface DataPoint {
   y: number;
 }
 
-// TODO: convert ids to dataPoints
-
-// TODO: Covert output to final output string[][]
-// Group items by cluster for the final output
-// let clusters: string[][] = new Array(k).fill(0).map(() => []);
-// assignments.forEach((clusterIndex, i) => {
-//   clusters[clusterIndex].push(dataPoints[i].id);
-// });
-
+/**
+ * Wrapper function for k-means clustering.
+ * @param ids - the IDs of the items to be clustered.
+ * @returns an array of clusters, where each cluster is an array of item IDs.
+ */
 function kMeansClusteringWrapper(
   ids: string[],
   items: BoardNode[]
 ): string[][] {
-  // Get output using k-means clustering with the elbow method (picking optimal k)
+  // Data type convertion for ease of processing
   const dataPoints = convertToDataPoints(ids, items);
+
+  // Get output using k-means clustering with the elbow method (picking optimal k)
   const [centroids, assignments] = elbowMethod(dataPoints);
 
   // Convert output to final output string[][]
@@ -48,7 +47,7 @@ function elbowMethod(dataPoints: DataPoint[]): [DataPoint[], number[]] {
   let distortions = [];
 
   for (let k = 1; k <= maxK; k++) {
-    let [centroids, assignments] = kMeansClustering(dataPoints, k);
+    let [centroids, assignments] = runKMeansForNTimes(dataPoints, k);
     let distortion = getMeanSquaredDistance(dataPoints, centroids, assignments);
     distortions.push(distortion);
   }
@@ -64,6 +63,36 @@ function elbowMethod(dataPoints: DataPoint[]): [DataPoint[], number[]] {
   }
 
   return kMeansClustering(dataPoints, optimalK);
+}
+
+/**
+ * Runs k-means clustering for n times and returns the best result.
+ */
+function runKMeansForNTimes(
+  dataPoints: DataPoint[],
+  k: number,
+  n: number = REPEATING_TIMES_PER_K
+): [DataPoint[], number[]] {
+  let bestCentroids: DataPoint[] = [];
+  let bestAssignments: number[] = [];
+  let lowestTotalDistance = Infinity;
+
+  for (let i = 0; i < n; i++) {
+    let [centroids, assignments] = kMeansClustering(dataPoints, k);
+    let totalDistance = calculateTotalDistance(
+      dataPoints,
+      centroids,
+      assignments
+    );
+
+    if (totalDistance < lowestTotalDistance) {
+      lowestTotalDistance = totalDistance;
+      bestCentroids = centroids;
+      bestAssignments = assignments;
+    }
+  }
+
+  return [bestCentroids, bestAssignments];
 }
 
 /**
@@ -206,15 +235,10 @@ export function getLocation(id: string, items: any): [number, number] {
     const centerY = item.y + item.height / 2;
     const roundedX = Number(centerX.toFixed(2));
     const roundedY = Number(centerY.toFixed(2));
-    console.error(`[${roundedX}, ${roundedY}]`);
     return [roundedX, roundedY];
   } else if (item) {
-    console.log(
-      `getLocation: Item with ID ${id} does not have 'width' or 'height' properties.`
-    );
     return [0, 0];
   } else {
-    console.log(`getLocation: Item with ID ${id} not found.`);
     return [0, 0];
   }
 }
