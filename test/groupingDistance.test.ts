@@ -3,9 +3,12 @@ import {
   convertToDataPoints,
   getLocation,
   recalculateCentroids,
-  // elbowMethod,
+  assignItemsToClusters,
+  initalizeCentroids,
+  getMeanSquaredDistance,
   // kMeansClustering,
   // recalculateCentroids,
+  // elbowMethod,
 } from "../src/kMeansClustering";
 
 const testConnector1 = {
@@ -179,8 +182,56 @@ describe("recalculateCentroids function", () => {
   });
 });
 
-// describe("elbowMethod function", () => {
-//   it("Should return the optimal number of clusters (k) as a number", () => {
-//     expect(elbowMethod(dataPoints)).toEqual(3);
-//   });
-// });
+describe("assignItemsToClusters function", () => {
+  it("assignItemsToClusters description", () => {
+    const dataPointsDeepCopy = dataPoints.map((dp) => ({ ...dp }));
+
+    const asgmts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+    const c1: DataPoint = { id: "1002", x: 70, y: 70 };
+    const c2: DataPoint = { id: "1007", x: 45, y: 45 };
+    const c3: DataPoint = { id: "1014", x: 15, y: 15 };
+    const centroids: DataPoint[] = [c1, c2, c3];
+    const centroidsDeepCopy = centroids.map((c) => ({ ...c }));
+
+    // assignments will be updated in place
+    const res = [0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2];
+
+    // expect(centroids).toEqual(res);
+    expect(assignItemsToClusters(dataPoints, centroids, asgmts)).toEqual(11);
+    expect(dataPoints).toEqual(dataPointsDeepCopy);
+    expect(centroids).toEqual(centroidsDeepCopy);
+    expect(asgmts).toEqual(res);
+    expect(assignItemsToClusters(dataPoints, centroids, asgmts)).toEqual(0);
+  });
+});
+
+describe("initalizeCentroids function", () => {
+  it("initalizeCentroids description", () => {
+    const dataPointsDeepCopy = dataPoints.map((dp) => ({ ...dp }));
+
+    let centroids: DataPoint[] = initalizeCentroids(3, dataPoints);
+    expect(centroids.length).toEqual(3);
+    for (let i = 0; i < 3; i++) {
+      expect(dataPoints).toContainEqual(centroids[i]);
+    }
+    for (let i = 0; i < 3; i++) {
+      // to verify if centroids are deep copied
+      centroids[i].x = centroids[i].x * 1.01;
+      expect(dataPoints).not.toContainEqual(centroids[i]);
+    }
+    expect(dataPoints).toEqual(dataPointsDeepCopy);
+  });
+});
+
+describe("getMeanSquaredDistance function", () => {
+  it("getMeanSquaredDistance description", () => {
+    const c1: DataPoint = { id: "1002", x: 71.57, y: 68.84 };
+    const c2: DataPoint = { id: "1007", x: 44.29, y: 46.03 };
+    const c3: DataPoint = { id: "1014", x: 14.64, y: 16.04 };
+    const centroids: DataPoint[] = [c1, c2, c3];
+    const asgmts = [0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2];
+    const res = 170.77;
+    expect(getMeanSquaredDistance(dataPoints, centroids, asgmts)).toEqual(res);
+  });
+});

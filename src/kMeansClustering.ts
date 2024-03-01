@@ -147,7 +147,7 @@ export function kMeansClustering(
 /**
  * Evaluates the k-means clustering by calculating the MSD of each data point to its assigned centroid.
  */
-function getMeanSquaredDistance(
+export function getMeanSquaredDistance(
   dataPoints: DataPoint[],
   centroids: DataPoint[],
   assignments: number[]
@@ -158,13 +158,16 @@ function getMeanSquaredDistance(
     totalDistance += Math.pow(point.x - centroid.x, 2);
     totalDistance += Math.pow(point.y - centroid.y, 2);
   });
-  return totalDistance;
+  return Number(totalDistance.toFixed(2));
 }
 
 /**
  * Randomly selects "k" data points to be the initial centroids.
  */
-function initalizeCentroids(k: number, dataPoints: DataPoint[]): DataPoint[] {
+export function initalizeCentroids(
+  k: number,
+  dataPoints: DataPoint[]
+): DataPoint[] {
   let shuffled = dataPoints.map((dp) => ({ ...dp })).sort(() => Math.random());
   return shuffled.slice(0, k);
 }
@@ -172,7 +175,7 @@ function initalizeCentroids(k: number, dataPoints: DataPoint[]): DataPoint[] {
 /**
  * Assigns each data point to the closest centroid.
  */
-function assignItemsToClusters(
+export function assignItemsToClusters(
   dataPoints: DataPoint[],
   centroids: DataPoint[],
   assignments: number[]
