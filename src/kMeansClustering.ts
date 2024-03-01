@@ -2,8 +2,8 @@
 import { BoardNode } from "@mirohq/websdk-types";
 import { items } from "./grouping";
 
-const MAX_ITERATIONS = 100;
-const REPEATING_TIMES_PER_K = 100;
+const MAX_ITERATIONS = 5;
+const REPEATING_TIMES_PER_K = 5;
 const ESTIMATED_NODES_PER_CLUSTER = 3;
 
 export interface DataPoint {
@@ -45,7 +45,7 @@ function kMeansClusteringWrapper(
  * Chooses the optimal k-means clustering using the elbow method.
  * @returns the optimal number of clusters (k) as a number.
  */
-export function elbowMethod(dataPoints: DataPoint[]): number {
+function elbowMethod(dataPoints: DataPoint[]): number {
   let maxK = dataPoints.length / ESTIMATED_NODES_PER_CLUSTER + 1;
   let distortions = [];
 
@@ -78,7 +78,7 @@ export function elbowMethod(dataPoints: DataPoint[]): number {
 /**
  * Runs k-means clustering for n times and returns the best result.
  */
-function runKMeansForNTimes(
+export function runKMeansForNTimes(
   dataPoints: DataPoint[],
   k: number,
   n: number = REPEATING_TIMES_PER_K
@@ -96,9 +96,14 @@ function runKMeansForNTimes(
     );
 
     if (totalDistance < lowestTotalDistance) {
+      // make a deep copy of centroids and assignments
+      bestCentroids = centroids.map((dp) => ({ ...dp }));
+      bestAssignments = assignments.map((asgmt) => asgmt);
       lowestTotalDistance = totalDistance;
-      bestCentroids = centroids;
-      bestAssignments = assignments;
+
+      // lowestTotalDistance = totalDistance;
+      // bestCentroids = centroids;
+      // bestAssignments = assignments;
     }
   }
 
@@ -108,7 +113,7 @@ function runKMeansForNTimes(
 /**
  * Implementation of k-means clustering that groups "nodes" into "k" clusters based on their (x, y) coordinates.
  */
-export function kMeansClustering(
+function kMeansClustering(
   dataPoints: DataPoint[],
   k: number
 ): [DataPoint[], number[]] {
@@ -121,25 +126,31 @@ export function kMeansClustering(
   let assignments: number[] = new Array(dataPoints.length).fill(-1);
   let iterations = MAX_ITERATIONS;
   let clusterChanged = 0;
+  let centroidsAreEqual = false;
 
   // Aiisgns each data point to the closest centroid
   do {
-    // print centroids as (id, x, y) pairs
-    // for (let i = 0; i < centroids.length; i++) {
-    //   console.error(
-    //     `!!! print centroids ${centroids[i].id}, ${centroids[i].x}, ${centroids[i].y}`
-    //   );
-    // }
+    // get a deep copy of centroids
+    const centroidsDeepCopy = centroids.map((dp) => ({ ...dp }));
+    centroidsAreEqual = true;
 
     clusterChanged = assignItemsToClusters(dataPoints, centroids, assignments);
     recalculateCentroids(dataPoints, centroids, assignments, k);
 
-    // for (let i = 0; i < centroids.length; i++) {
-    //   console.error(
-    //     `!!! print centroids ${centroids[i].id}, ${centroids[i].x}, ${centroids[i].y}`
-    //   );
-    // }
-  } while (clusterChanged > 0 && iterations-- > 0);
+    // while centroils is not moving i.e. centroids are equal to the deep copy, stop the do while loop
+    for (let i = 0; i < centroids.length; i++) {
+      if (
+        centroids[i].x !== centroidsDeepCopy[i].x ||
+        centroids[i].y !== centroidsDeepCopy[i].y
+      ) {
+        centroidsAreEqual = false;
+        break;
+      }
+    }
+  } while (!centroidsAreEqual && iterations-- > 0);
+
+  // print the number of iterations run
+  // console.error(`!!! print iterations ${MAX_ITERATIONS - iterations}`);
 
   return [centroids, assignments];
 }
@@ -158,6 +169,8 @@ export function getMeanSquaredDistance(
     totalDistance += Math.pow(point.x - centroid.x, 2);
     totalDistance += Math.pow(point.y - centroid.y, 2);
   });
+  // print the total distance
+  // console.error(`!!! print total distance ${Number(totalDistance.toFixed(2))}`);
   return Number(totalDistance.toFixed(2));
 }
 
@@ -168,8 +181,13 @@ export function initalizeCentroids(
   k: number,
   dataPoints: DataPoint[]
 ): DataPoint[] {
-  let shuffled = dataPoints.map((dp) => ({ ...dp })).sort(() => Math.random());
-  return shuffled.slice(0, k);
+  let indices = new Set<number>();
+  while (indices.size < k) {
+    indices.add(Math.floor(Math.random() * dataPoints.length));
+  }
+  let centroids = Array.from(indices).map((i) => ({ ...dataPoints[i] }));
+  const res = centroids.map((dp) => ({ ...dp }));
+  return res;
 }
 
 /**

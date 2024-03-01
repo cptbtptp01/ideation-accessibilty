@@ -6,6 +6,7 @@ import {
   assignItemsToClusters,
   initalizeCentroids,
   getMeanSquaredDistance,
+  runKMeansForNTimes,
   // kMeansClustering,
   // recalculateCentroids,
   // elbowMethod,
@@ -233,5 +234,75 @@ describe("getMeanSquaredDistance function", () => {
     const asgmts = [0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2];
     const res = 170.77;
     expect(getMeanSquaredDistance(dataPoints, centroids, asgmts)).toEqual(res);
+  });
+});
+
+// describe("kMeansClustering function", () => {
+//   it("kMeansClustering description", () => {
+//     // k = 3, the optimal number of clusters
+//     // let c1: DataPoint = { id: "1002", x: 71.57, y: 68.84 };
+//     // let c2: DataPoint = { id: "1007", x: 44.29, y: 46.03 };
+//     // let c3: DataPoint = { id: "1014", x: 14.64, y: 16.04 };
+//     // const centroids: DataPoint[] = [c1, c2, c3];
+//     // const asgmts = [0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2];
+//     // const expectedRes: [DataPoint[], number[]] = [centroids, asgmts];
+//     const actualRes = kMeansClustering(dataPoints, 3);
+//     // print centroids as (id, x, y) pairs
+//     for (let i = 0; i < actualRes[0].length; i++) {
+//       console.error(
+//         `!!! print centroids ${actualRes[0][i].id}, ${actualRes[0][i].x}, ${actualRes[0][i].y}`
+//       );
+//     }
+//     // print assignments
+//     console.error(`!!! print assignments ${actualRes[1]}`);
+//   });
+// });
+
+describe("runKMeansForNTimes function", () => {
+  it("runKMeansForNTimes description", () => {
+    const actualRes = runKMeansForNTimes(dataPoints, 3);
+    const actualCentroids = actualRes[0];
+    const actualAssignments = actualRes[1];
+
+    // test centroids
+    expect(actualCentroids.length).toEqual(3);
+    const set1 = new Set([
+      actualCentroids[0].x,
+      actualCentroids[1].x,
+      actualCentroids[2].x,
+    ]);
+    expect(set1.size).toEqual(3);
+    expect(set1.has(71.57)).toEqual(true);
+    expect(set1.has(44.29)).toEqual(true);
+    expect(set1.has(14.64)).toEqual(true);
+    const set2 = new Set([
+      actualCentroids[0].y,
+      actualCentroids[1].y,
+      actualCentroids[2].y,
+    ]);
+    expect(set2.size).toEqual(3);
+    expect(set2.has(68.84)).toEqual(true);
+    expect(set2.has(46.03)).toEqual(true);
+    expect(set2.has(16.04)).toEqual(true);
+
+    // test assignments
+    let cluster1 = 0;
+    let cluster2 = 0;
+    let cluster3 = 0;
+    for (let i = 0; i < actualAssignments.length; i++) {
+      if (actualAssignments[i] === 0) {
+        cluster1++;
+      } else if (actualAssignments[i] === 1) {
+        cluster2++;
+      } else {
+        cluster3++;
+      }
+    }
+    // put clusters in a set, the set shall contains 4, 5, 6
+    const set = new Set([cluster1, cluster2, cluster3]);
+    expect(set.size).toEqual(3);
+    expect(set.has(4)).toEqual(true);
+    expect(set.has(5)).toEqual(true);
+    expect(set.has(6)).toEqual(true);
   });
 });
