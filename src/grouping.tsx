@@ -9,6 +9,7 @@ import data from "./data/grouping/stickyColor";
 
 // Global variable to make Miro items accessible throughout the file
 let items: BoardNode[];
+export { items };
 
 // Sets to store IDs of items based on their categorization
 let frameSet: Set<string> = new Set();
@@ -102,13 +103,13 @@ function clusterByType(): void {
       floatingSet.add(item.id);
     }
   });
-};
+}
 
 /**
  * Clusters items based on spatial proximity.
  * @returns A list of clusters, each cluster containing item IDs based on proximity.
  */
-function clusterByDistance(): string[][] {
+function clusterByDistance(initialCluster: string[]): string[][] {
   // Implementation will cluster floating items based on spatial proximity.
   return []; // Placeholder return
 }
@@ -118,7 +119,7 @@ function clusterByDistance(): string[][] {
  * @param cluster An array of item IDs as strings.
  * @returns A map of color to a list of item IDs.
  */
-export function groupByColors(cluster: string[]):Map<string, Set<string>>{
+export function groupByColors(cluster: string[]): Map<string, Set<string>> {
   let colorMap: Map<string, Set<string>> = new Map();
   cluster.forEach((item) => {
     const color = getColor(item, items);
@@ -169,7 +170,8 @@ export function getColor(id: string, items): string {
   if (item.type === "card") {
     color = GetColorName(item.style.cardTheme);
   } else if (item.type === "shape") {
-    color = item.style.fillColor !== "transparent"
+    color =
+      item.style.fillColor !== "transparent"
         ? GetColorName(item.style.fillColor)
         : "Uncolored";
   } else if (item.type === "sticky_note") {
@@ -182,6 +184,7 @@ export function getColor(id: string, items): string {
   return color;
 }
 
+// TODO - zqy: Duplicate function, to be removed
 /**
  * Calculates and returns the central coordinate of an item.
  * @returns A tuple representing the central coordinate (x, y) of the item.
@@ -198,20 +201,6 @@ export function getLocation(id: string, items): [number, number] {
   } else {
     console.error(`getLocation: Item with ID ${id} not found.`);
     return [0, 0];
-  }
-}
-
-// For purpose of testing only, to be deleted
-export function add(a: number, b: number): number {
-  return a + b;
-}
-
-// helper function for sticky note color
-export function getStickyNoteColor(color:string):string {
-  for (const item of data) {
-    if (item.fillColor === color) {
-      return item.color;
-    }
   }
 }
 
