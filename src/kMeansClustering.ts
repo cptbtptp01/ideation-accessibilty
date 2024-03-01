@@ -6,6 +6,10 @@ const MAX_ITERATIONS = 5;
 const REPEATING_TIMES_PER_K = 5;
 const ESTIMATED_NODES_PER_CLUSTER = 3;
 
+const TRHESHOLD_FOR_APPLYING_K_MEANS = 5;
+const DEFAULT_ONE_CLUSTER = 1;
+const MAX_MSD_FOR_TWO_CLUSTER = 200; // TODO (zqy): to be determined
+
 export interface DataPoint {
   // only used locally in kMeansClustering
   id: string;
@@ -18,10 +22,7 @@ export interface DataPoint {
  * @param ids - the IDs of the items to be clustered.
  * @returns an array of clusters, where each cluster is an array of item IDs.
  */
-function kMeansClusteringWrapper(
-  ids: string[],
-  items: BoardNode[]
-): string[][] {
+export function kMeansClusteringWrapper(ids: string[], items: any): string[][] {
   // Data type convertion for ease of processing
   const dataPoints = convertToDataPoints(ids, items);
 
@@ -31,30 +32,31 @@ function kMeansClusteringWrapper(
   // Run k-means for n times using the optimal k
   const [centroids, assignments] = runKMeansForNTimes(dataPoints, optimalK);
 
-  // Convert output to final output string[][]
-  const clusters: string[][] = new Array(centroids.length)
-    .fill(0)
-    .map(() => []);
-  assignments.forEach((clusterIndex, i) => {
-    clusters[clusterIndex].push(dataPoints[i].id);
-  });
-  return clusters;
+  // Rutrn the cluster res as string[][]
+  return convertBackToNodeIds(ids, assignments, optimalK);
 }
 
 /**
  * Chooses the optimal k-means clustering using the elbow method.
  * @returns the optimal number of clusters (k) as a number.
  */
-function elbowMethod(dataPoints: DataPoint[]): number {
+export function elbowMethod(dataPoints: DataPoint[]): number {
+  if (dataPoints.length <= TRHESHOLD_FOR_APPLYING_K_MEANS) {
+    return DEFAULT_ONE_CLUSTER;
+  }
+
   let maxK = dataPoints.length / ESTIMATED_NODES_PER_CLUSTER + 1;
   let distortions = [];
 
   for (let k = 2; k <= maxK; k++) {
     let [centroids, assignments] = runKMeansForNTimes(dataPoints, k);
     let distortion = getMeanSquaredDistance(dataPoints, centroids, assignments);
-    // console.error(`!!! k=${k}, distortion=${distortion}`);
+    if (k === 2 && distortion < MAX_MSD_FOR_TWO_CLUSTER) {
+      return k;
+    }
     distortions.push(distortion);
   }
+  // log distortions
 
   let optimalK = 0;
   let maxDistortionChange = 0;
@@ -65,12 +67,6 @@ function elbowMethod(dataPoints: DataPoint[]): number {
       optimalK = i + 2;
     }
   }
-
-  // console.error(`!!! print datapoints`);
-  // print the x, y tuple for dataPoints
-  // for (let i = 0; i < dataPoints.length; i++) {
-  //   console.error(`!!! print ${dataPoints[i].x}, ${dataPoints[i].y}`);
-  // }
 
   return optimalK;
 }
@@ -100,10 +96,6 @@ export function runKMeansForNTimes(
       bestCentroids = centroids.map((dp) => ({ ...dp }));
       bestAssignments = assignments.map((asgmt) => asgmt);
       lowestTotalDistance = totalDistance;
-
-      // lowestTotalDistance = totalDistance;
-      // bestCentroids = centroids;
-      // bestAssignments = assignments;
     }
   }
 
@@ -149,9 +141,6 @@ function kMeansClustering(
     }
   } while (!centroidsAreEqual && iterations-- > 0);
 
-  // print the number of iterations run
-  // console.error(`!!! print iterations ${MAX_ITERATIONS - iterations}`);
-
   return [centroids, assignments];
 }
 
@@ -170,7 +159,6 @@ export function getMeanSquaredDistance(
     totalDistance += Math.pow(point.y - centroid.y, 2);
   });
   // print the total distance
-  // console.error(`!!! print total distance ${Number(totalDistance.toFixed(2))}`);
   return Number(totalDistance.toFixed(2));
 }
 
@@ -267,6 +255,23 @@ export function convertToDataPoints(ids: string[], items: any): DataPoint[] {
     }
   }
   return res;
+}
+
+export function convertBackToNodeIds(
+  ids: string[],
+  asgmts: number[],
+  optimalK: number
+): string[][] {
+  const clusters: string[][] = Array.from(
+    { length: optimalK },
+    () => [] as string[]
+  );
+
+  asgmts.forEach((clusterIndex, i) => {
+    clusters[clusterIndex].push(ids[i]);
+  });
+
+  return clusters;
 }
 
 /**

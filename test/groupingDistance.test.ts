@@ -1,15 +1,15 @@
 import {
   DataPoint,
   convertToDataPoints,
+  convertBackToNodeIds,
   getLocation,
   recalculateCentroids,
   assignItemsToClusters,
   initalizeCentroids,
   getMeanSquaredDistance,
   runKMeansForNTimes,
-  // kMeansClustering,
-  // recalculateCentroids,
-  // elbowMethod,
+  elbowMethod,
+  kMeansClusteringWrapper,
 } from "../src/kMeansClustering";
 
 const testConnector1 = {
@@ -237,27 +237,6 @@ describe("getMeanSquaredDistance function", () => {
   });
 });
 
-// describe("kMeansClustering function", () => {
-//   it("kMeansClustering description", () => {
-//     // k = 3, the optimal number of clusters
-//     // let c1: DataPoint = { id: "1002", x: 71.57, y: 68.84 };
-//     // let c2: DataPoint = { id: "1007", x: 44.29, y: 46.03 };
-//     // let c3: DataPoint = { id: "1014", x: 14.64, y: 16.04 };
-//     // const centroids: DataPoint[] = [c1, c2, c3];
-//     // const asgmts = [0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2];
-//     // const expectedRes: [DataPoint[], number[]] = [centroids, asgmts];
-//     const actualRes = kMeansClustering(dataPoints, 3);
-//     // print centroids as (id, x, y) pairs
-//     for (let i = 0; i < actualRes[0].length; i++) {
-//       console.error(
-//         `!!! print centroids ${actualRes[0][i].id}, ${actualRes[0][i].x}, ${actualRes[0][i].y}`
-//       );
-//     }
-//     // print assignments
-//     console.error(`!!! print assignments ${actualRes[1]}`);
-//   });
-// });
-
 describe("runKMeansForNTimes function", () => {
   it("runKMeansForNTimes description", () => {
     const actualRes = runKMeansForNTimes(dataPoints, 3);
@@ -304,5 +283,237 @@ describe("runKMeansForNTimes function", () => {
     expect(set.has(4)).toEqual(true);
     expect(set.has(5)).toEqual(true);
     expect(set.has(6)).toEqual(true);
+  });
+});
+
+describe("elbowMethod function", () => {
+  it("elbowMethod - three clusters", () => {
+    expect(elbowMethod(dataPoints)).toEqual(3);
+  });
+});
+
+describe("elbowMethod function", () => {
+  it("elbowMethod - special two clusters", () => {
+    const dps = [dp1, dp2, dp3, dp13, dp14, dp15];
+    expect(elbowMethod(dps)).toEqual(2);
+  });
+});
+
+describe("elbowMethod function", () => {
+  it("elbowMethod - special two clusters", () => {
+    const dps = [dp1, dp3, dp5, dp8, dp15];
+    expect(elbowMethod(dps)).toEqual(1);
+  });
+});
+
+describe("elbowMethod function", () => {
+  it("elbowMethod - special one item case", () => {
+    const dps = [dp1, dp10, dp15];
+    expect(elbowMethod(dps)).toEqual(1);
+  });
+});
+
+const ids = [
+  "1001",
+  "1002",
+  "1003",
+  "1004",
+  "1005",
+  "1006",
+  "1007",
+  "1008",
+  "1009",
+  "1010",
+  "1011",
+  "1012",
+  "1013",
+  "1014",
+  "1015",
+];
+
+describe("convertBackToNodeIds function", () => {
+  it("convertBackToNodeIds - description", () => {
+    const asgmts = [0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2];
+    const res = [
+      ["1001", "1002", "1003", "1004"],
+      ["1005", "1006", "1007", "1008", "1009"],
+      ["1010", "1011", "1012", "1013", "1014", "1015"],
+    ];
+    // this is doable as the `items` parameter is set to any type
+    expect(convertBackToNodeIds(ids, asgmts, 3)).toEqual(res);
+  });
+});
+
+const testStickyNote111 = {
+  type: "sticky_note",
+  id: "1001",
+  x: 61.63,
+  y: 61.02,
+  width: 10,
+  height: 10,
+};
+
+const testStickyNote222 = {
+  type: "sticky_note",
+  id: "1002",
+  x: 69.67,
+  y: 66.53,
+  width: 10,
+  height: 10,
+};
+
+const testStickyNote333 = {
+  type: "sticky_note",
+  id: "1003",
+  x: 68.71,
+  y: 65.52,
+  width: 10,
+  height: 10,
+};
+
+const testStickyNote4 = {
+  type: "sticky_note",
+  id: "1004",
+  x: 66.28,
+  y: 62.28,
+  width: 10,
+  height: 10,
+};
+
+const testStickyNote5 = {
+  type: "sticky_note",
+  id: "1005",
+  x: 37.83,
+  y: 41.69,
+  width: 10,
+  height: 10,
+};
+
+const testStickyNote6 = {
+  type: "sticky_note",
+  id: "1006",
+  x: 41.38,
+  y: 36.5,
+  width: 10,
+  height: 10,
+};
+
+const testStickyNote7 = {
+  type: "sticky_note",
+  id: "1007",
+  x: 38.93,
+  y: 43.3,
+  width: 10,
+  height: 10,
+};
+
+const testStickyNote8 = {
+  type: "sticky_note",
+  id: "1008",
+  x: 38.4,
+  y: 39.2,
+  width: 10,
+  height: 10,
+};
+
+const testStickyNote9 = {
+  type: "sticky_note",
+  id: "1009",
+  x: 39.9,
+  y: 44.45,
+  width: 10,
+  height: 10,
+};
+
+const testStickyNote10 = {
+  type: "sticky_note",
+  id: "1010",
+  x: 10.2,
+  y: 9.45,
+  width: 10,
+  height: 10,
+};
+
+const testStickyNote11 = {
+  type: "sticky_note",
+  id: "1011",
+  x: 8.71,
+  y: 13.75,
+  width: 10,
+  height: 10,
+};
+
+const testStickyNote12 = {
+  type: "sticky_note",
+  id: "1012",
+  x: 10.15,
+  y: 7.87,
+  width: 10,
+  height: 10,
+};
+
+const testStickyNote13 = {
+  type: "sticky_note",
+  id: "1013",
+  x: 7.08,
+  y: 7.85,
+  width: 10,
+  height: 10,
+};
+
+const testStickyNote14 = {
+  type: "sticky_note",
+  id: "1014",
+  x: 11.98,
+  y: 12.03,
+  width: 10,
+  height: 10,
+};
+
+const testStickyNote15 = {
+  type: "sticky_note",
+  id: "1015",
+  x: 9.7,
+  y: 15.3,
+  width: 10,
+  height: 10,
+};
+
+const items: any[] = [
+  testStickyNote111,
+  testStickyNote222,
+  testStickyNote333,
+  testStickyNote4,
+  testStickyNote5,
+  testStickyNote6,
+  testStickyNote7,
+  testStickyNote8,
+  testStickyNote9,
+  testStickyNote10,
+  testStickyNote11,
+  testStickyNote12,
+  testStickyNote13,
+  testStickyNote14,
+  testStickyNote15,
+];
+
+describe("kMeansClusteringWrapper function", () => {
+  it("kMeansClusteringWrapper description", () => {
+    // generate the expected cluster result in string[][], where the id info is the string that are stored
+    // this is doable as the `items` parameter is set to any type
+    const expectedRes = [
+      ["1001", "1002", "1003", "1004"],
+      ["1005", "1006", "1007", "1008", "1009"],
+      ["1010", "1011", "1012", "1013", "1014", "1015"],
+    ];
+    const actualRes = kMeansClusteringWrapper(ids, items);
+    // confirm each element in expectedRes is in actualRes
+    expectedRes.forEach((cluster) => {
+      expect(actualRes).toContainEqual(cluster);
+    });
+    // confirm each element in actualRes is in expectedRes
+    actualRes.forEach((cluster) => {
+      expect(expectedRes).toContainEqual(cluster);
+    });
   });
 });
