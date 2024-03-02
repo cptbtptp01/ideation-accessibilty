@@ -1,6 +1,6 @@
-import { getColor, getStickyNoteColor } from '../src/grouping';
-import { mockShape1, mockShape2, mockShape3 } from './mockBoardNodes';
-import { mockStickyNote1, mockStickyNote2 } from './mockBoardNodes';
+import { getColor, getStickyNoteColor } from "../src/grouping";
+import { mockShape1, mockShape2, mockShape3 } from "./mockBoardNodes";
+import { mockStickyNote1, mockStickyNote2 } from "./mockBoardNodes";
 
 // test groupByColor function
 // given we are declaring global variables in the actual code,
@@ -38,21 +38,29 @@ describe('groupByColor', () => {
 });
 
 // Test getColor function
-describe('getColor', () => {
-    it('should return the correct color of the item', () => {
-        const items = [mockShape1, mockShape2, mockShape3, mockStickyNote1, mockStickyNote2];
-        expect(getColor(mockShape1.id, items)).toBe('Lightning Yellow');
-        expect(getColor(mockShape2.id, items)).toBe('Lightning Yellow');
-        expect(getColor(mockShape3.id, items)).toBe('Uncolored');
-        expect(getColor(mockStickyNote1.id, items)).toBe('Light Yellow');
-        expect(getColor(mockStickyNote2.id, items)).toBe('Yellow');
-    });
+describe("getColor", () => {
+  it("should return the correct color of the item", () => {
+    const items = [
+      mockShape1,
+      mockShape2,
+      mockShape3,
+      mockStickyNote1,
+      mockStickyNote2,
+    ];
+    expect(getColor(mockShape1.id, items)).toBe("Lightning Yellow");
+    expect(getColor(mockShape2.id, items)).toBe("Lightning Yellow");
+    expect(getColor(mockShape3.id, items)).toBe("Uncolored");
+    expect(getColor(mockStickyNote1.id, items)).toBe("Light Yellow");
+    expect(getColor(mockStickyNote2.id, items)).toBe("Yellow");
+  });
 });
 
 // Test getStickyHex function
-describe('getStickyHex', () => {
-    it('should return the correct hex value of the sticky note color', () => {
-        expect(getStickyNoteColor(mockStickyNote1.style.fillColor)).toBe('Light Yellow');
-        expect(getStickyNoteColor(mockStickyNote2.style.fillColor)).toBe('Yellow');
-    });
+describe("getStickyHex", () => {
+  it("should return the correct hex value of the sticky note color", () => {
+    expect(getStickyNoteColor(mockStickyNote1.style.fillColor)).toBe(
+      "Light Yellow"
+    );
+    expect(getStickyNoteColor(mockStickyNote2.style.fillColor)).toBe("Yellow");
+  });
 });
