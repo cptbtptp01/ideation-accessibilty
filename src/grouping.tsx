@@ -17,6 +17,7 @@ let floatingSet: Set<string> = new Set();
 
 // Maps and Sets to organize items by their characteristics
 let imageSet: Set<string> = new Set();
+let shapeSet: Set<string> = new Set(); // hold all shapes regardless of form
 let shapeMap: Map<string, Set<string>> = new Map();
 let stickyNoteSet: Set<string> = new Set();
 let cardSet: Set<string> = new Set();
@@ -90,21 +91,36 @@ function preprocessingByType(): void {
 /**
  * Clusters board items by group, frame, floating, considering groups and frames as predefined clusters.
  * Floating items are clustered based on proximity using clusterByDistance.
- * @updates frameSet, groupSet, floatingSet
- * @returns A list of clusters, each cluster containing item IDs based on type. TBD TODO [cluster, cluster, cluster]
+ *
+ * @returns A map of clusters, with keys as parentIDs, and values as maps of item types to item IDs.
+ * @example
+ * {
+ *  "frame1": {
+ *   "image": ["id1", "id2"],
+ *   "shape": ["id3", "id4"],
+ *   "sticky_note": [],...
+ * },
+ *  "group1": {...},
+ * ...
+ * }
  */
 function clusterByType(): Set<string>[] {
-  let clusters : [] = [];
-  items.forEach((item) => {
-    if (item.type === "frame") {
-      frameSet.add(item.id);
-    } else if (item.type === "group") {
-      groupSet.add(item.id);
-    } else {
-      floatingSet.add(item.id); // tbd
-    }
-  });
-  clusters.push(frameSet, groupSet, floatingSet);
+  const clusters : Map<string, Set<string>> = new Map();
+
+  for (const parentId of frameSet) {
+    const parent = items.find(item => item.id === parentId);
+    const childrenIds = parent.childrenIds;
+    const cluster = getChildren(childrenIds);
+    clusters.set(parentId, cluster);
+  }
+
+  for (const parentId of groupSet) {
+    const parent = items.find(item => item.id === parentId);
+    const childrenIds = parent.itemsIds;
+    const cluster = getChildren(childrenIds);
+    clusters.set(parentId, cluster);
+  }
+
   return clusters;
 };
 
@@ -217,6 +233,37 @@ export function getStickyNoteColor(color:string):string {
       return item.color;
     }
   }
+}
+
+// helper to group a single parent's children by type
+function getChildren(childrenIds:Set<string>): Map<string, Set<string>>{
+
+  const childrenTypeMap: Map<string, Set<string>> = new Map([
+    ["image", new Set()],
+    ["shape", new Set()],
+    ["sticky_note", new Set()],
+    ["card", new Set()],
+    ["text", new Set()],
+    ["connector", new Set()]
+  ]);
+
+  for (const childId in childrenIds) {
+    if (imageSet.has(childId)) {
+      childTypeMap.get("image")?.add(childId);
+    } else if (shapeSet.has(childId)) {
+      childTypeMap.get("shape")?.add(childId);
+    } else if (stickyNoteSet.has(childId)) {
+      childTypeMap.get("sticky_note")?.add(childId);
+    } else if (cardSet.has(childId)) {
+      childTypeMap.get("card")?.add(childId);
+    } else if (textSet.has(childId)) {
+      childTypeMap.get("text")?.add(childId);
+    } else if (connectorSet.has(childId)) {
+      childTypeMap.get("connector")?.add(childId);
+    }
+  }
+
+  return childrenTypeMap; // todo: see if filter out empty sets is needed
 }
 
 // ------------------------------------------------------------ OLD ------------------------------------------------------------
