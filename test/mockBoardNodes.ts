@@ -2,35 +2,32 @@
 
 // frame - empty
 export const emptyFrame = {
-    type: "frame",
-    title: "Frame 1",
-    childrenIds: [],
-    style: {
-        fillColor: "#ffffff"
-    },
-    id: "3458764580673875996",
-    parentId: null,
-    origin: "center",
-    relativeTo: "canvas_center",
-    createdAt: "2024-02-29T03:31:14.020Z",
-    createdBy: "3458764575728178245",
-    modifiedAt: "2024-02-29T03:31:26.361Z",
-    modifiedBy: "3458764575728178245",
-    x: -2933.759775307095,
-    y: 2495.4418699295593,
-    height: 791,
-    width: 1439.2202166064983,
-    showContent: true
+  type: "frame",
+  title: "Frame 1",
+  childrenIds: [],
+  style: {
+    fillColor: "#ffffff"
+  },
+  id: "frame1",
+  parentId: null,
+  origin: "center",
+  relativeTo: "canvas_center",
+  createdAt: "2024-02-29T03:31:14.020Z",
+  createdBy: "3458764575728178245",
+  modifiedAt: "2024-02-29T03:31:26.361Z",
+  modifiedBy: "3458764575728178245",
+  x: -2933.759775307095,
+  y: 2495.4418699295593,
+  height: 791,
+  width: 1439.2202166064983,
+  showContent: true
 };
 
 // group - groups cannot be empty
 export const group = {
-    type: "group",
-    itemsIds: [
-        "3458764580516886689",
-        "3458764580516886705"
-    ],
-    id: "3458764580673938034"
+  type: "group",
+  itemsIds: ["3458764580516886689", "3458764580516886705"],
+  id: "group1"
 };
 
 // shape - round rec - content - fill - border
@@ -49,7 +46,7 @@ export const mockShape1 = {
     borderColor: "#1a1a1a",
     borderWidth: 2,
     fillOpacity: 1,
-    color: "#1a1a1a",
+    color: "#1a1a1a"
   },
   id: "3458764580516886289",
   parentId: null,
@@ -64,7 +61,7 @@ export const mockShape1 = {
   y: 1259.070165330662,
   width: 304,
   height: 156,
-  rotation: 0,
+  rotation: 0
 };
 
 // shape - round rec - content - fill
@@ -83,7 +80,7 @@ export const mockShape2 = {
     borderColor: "transparent",
     borderWidth: 2,
     fillOpacity: 1,
-    color: "#1a1a1a",
+    color: "#1a1a1a"
   },
   id: "3458764580530425719",
   parentId: null,
@@ -98,7 +95,7 @@ export const mockShape2 = {
   y: 1259.070165330662,
   width: 304,
   height: 156,
-  rotation: 0,
+  rotation: 0
 };
 
 export const mockShape3 = {
@@ -116,7 +113,7 @@ export const mockShape3 = {
     borderColor: "#1a1a1a",
     borderWidth: 2,
     fillOpacity: 1,
-    color: "#1a1a1a",
+    color: "#1a1a1a"
   },
   id: "3458764580530425796",
   parentId: null,
@@ -131,7 +128,7 @@ export const mockShape3 = {
   y: 1259.070165330662,
   width: 304,
   height: 156,
-  rotation: 0,
+  rotation: 0
 };
 
 export const mockStickyNote1 = {
@@ -141,7 +138,7 @@ export const mockStickyNote1 = {
   style: {
     fillColor: "light_yellow",
     textAlign: "center",
-    textAlignVertical: "middle",
+    textAlignVertical: "middle"
   },
   tagIds: [],
   id: "3458764580516885999",
@@ -156,7 +153,7 @@ export const mockStickyNote1 = {
   x: -2712.8002239449133,
   y: 1165.070165330662,
   width: 212.93,
-  height: 243.96,
+  height: 243.96
 };
 
 export const mockStickyNote2 = {
@@ -166,7 +163,7 @@ export const mockStickyNote2 = {
   style: {
     fillColor: "yellow",
     textAlign: "center",
-    textAlignVertical: "middle",
+    textAlignVertical: "middle"
   },
   tagIds: [],
   id: "3458764580516886689",
@@ -181,5 +178,5 @@ export const mockStickyNote2 = {
   x: -2712.8002239449133,
   y: 1409.030165330662,
   width: 212.93,
-  height: 243.96,
+  height: 243.96
 };
