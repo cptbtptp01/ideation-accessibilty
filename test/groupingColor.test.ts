@@ -1,11 +1,32 @@
-import { getColor, getStickyNoteColor } from "../src/grouping";
+import { getStickyNoteColor } from "../src/grouping";
+import { GetColorName } from "hex-color-to-color-name";
 import { mockShape1, mockShape2, mockShape3 } from "./mockBoardNodes";
 import { mockStickyNote1, mockStickyNote2 } from "./mockBoardNodes";
 
 // test groupByColor function
 // given we are declaring global variables in the actual code,
 // solution for testing is to mock the function logic within the test file
-function groupByColor(cluster: Set<string>, items: any) {
+function getColor(id: string, items: any[]): string {
+  const item = items.find((item) => item.id === id);
+  let color;
+  if (item.type === "card") {
+    color = GetColorName(item.style.cardTheme);
+  } else if (item.type === "shape") {
+    color =
+      item.style.fillColor !== "transparent"
+        ? GetColorName(item.style.fillColor)
+        : "Uncolored";
+  } else if (item.type === "sticky_note") {
+    color = getStickyNoteColor(item.style.fillColor);
+  } else if (item.type === "text") {
+    color = GetColorName(item.style.color);
+  } else {
+    color = "Uncolored";
+  }
+  return color;
+}
+
+function groupByColor(cluster: Set<string>, items: any[]) {
   let colorMap: Map<string, Set<string>> = new Map();
   cluster.forEach((item) => {
     const color = getColor(item, items);

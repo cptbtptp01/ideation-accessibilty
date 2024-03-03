@@ -106,24 +106,25 @@ function preprocessingByType(): void {
 function clusterByParent(): Map<string, string[]> {
   const clusters : Map<string, string[]> = new Map();
 
-  for (const parentId of frameSet) {
-    const parent = items.find(item => item.id === parentId);
-    const childrenIds = parent.childrenIds;
-    clusters.set(parentId, childrenIds);
+  if (frameSet.size > 0) {
+    for (const parentId of frameSet) {
+      const parent = items.find((item) => item.id === parentId);
+      const childrenIds = parent.childrenIds;
+      clusters.set(parentId, childrenIds);
+    }
   }
 
-  for (const parentId of groupSet) {
-    const parent = items.find(item => item.id === parentId);
-    const childrenIds = parent.itemsIds;
-    clusters.set(parentId, childrenIds);
+  if (groupSet.size > 0) {
+    for (const parentId of groupSet) {
+      const parent = items.find((item) => item.id === parentId);
+      const childrenIds = parent.itemsIds;
+      clusters.set(parentId, childrenIds);
+    }
   }
 
-  // todo(hy): confirm the logic for floatingSet
+  // todo(hy): confirm the logic for floatingSet, use clusterByDistance
   // todo(hy): if connectors are present, nodes are put into one cluster
-  for (const parentId of floatingSet) {
-    const childrenIds = clusterByDistance(floatingSet);
-    clusters.set(parentId, childrenIds);
-  }
+  // frameSet does not have parentId
 
   return clusters;
 };
@@ -142,7 +143,7 @@ function clusterByDistance(initialCluster: string[]): string[][] {
  * @param cluster A set of item IDs as strings.
  * @returns A map of color to a list of item IDs.
  */
-export function groupByColors(cluster: Set<string>):Map<string, Set<string>>{
+export function groupByColors(cluster: string[]):Map<string, Set<string>>{
   let colorMap: Map<string, Set<string>> = new Map();
   cluster.forEach((item) => {
     const color = getColor(item, items);
@@ -171,10 +172,12 @@ function groupByTypes(cluster: string[]): Map<string, string[]> {
   const typeMap: Map<string, string[]> = new Map();
   for (const id of cluster) {
     const item = items.find((item) => item.id === id);
-    if (item.type in typeMap) {
-      typeMap.get(item.type)?.push(id);
-    } else {
-      typeMap.set(item.type, [id]);
+    if (item) {
+      if (item.type in typeMap) {
+        typeMap.get(item.type)?.push(id);
+      } else {
+        typeMap.set(item.type, [id]);
+      }
     }
   }
   return typeMap;
@@ -201,7 +204,7 @@ function evaluateClusters(
  * @param items container stores all the BoardNode objects.
  * @returns The color of the item as a string.
  */
-export function getColor(id: string, items): string {
+function getColor(id: string): string {
   const item = items.find((item) => item.id === id);
   let color;
   if (item.type === "card") {
@@ -255,78 +258,4 @@ export function getStickyNoteColor(color:string):string {
   }
 }
 
-// helper to group a single parent's children by type
-function getChildren(childrenIds: Set<string>): Map<string, string[]> {
-  const childrenTypeMap: Map<string, string[]> = new Map([
-    ["image", []],
-    ["shape", []],
-    ["sticky_note", []],
-    ["card", []],
-    ["text", []],
-    ["connector", []]
-  ]);
-
-  for (const childId of childrenIds) {
-    if (imageSet.has(childId)) {
-      childrenTypeMap.get("image")?.push(childId);
-    } else if (shapeSet.has(childId)) {
-      childrenTypeMap.get("shape")?.push(childId);
-    } else if (stickyNoteSet.has(childId)) {
-      childrenTypeMap.get("sticky_note")?.push(childId);
-    } else if (cardSet.has(childId)) {
-      childrenTypeMap.get("card")?.push(childId);
-    } else if (textSet.has(childId)) {
-      childrenTypeMap.get("text")?.push(childId);
-    } else if (connectorSet.has(childId)) {
-      childrenTypeMap.get("connector")?.push(childId);
-    }
-  }
-
-  return childrenTypeMap;
-}
-
-// ------------------------------------------------------------ OLD ------------------------------------------------------------
-
-// build hierarchy
-async function collectItemsByFrame(items: BoardNode[]) {
-  // {frame1:[node1, node2,..], frame2: [node1, node2,...]}
-  const frameMap: { [key: string]: BoardNode[] } = {};
-
-  for (const item of items) {
-    if (item.type === "frame" && item.childrenIds.length > 0) {
-      const children = await miro.board.get({ id: item.childrenIds });
-      frameMap[item.id] = children;
-    }
-    // todo: handle nested cases
-  }
-  return frameMap;
-}
-
-export async function groupItems() {
-  const items = await miro.board.get();
-  const itemMap: { [key: string]: BoardNode[] } = {};
-
-  items.forEach((item) => {
-    const color = determineColor(item);
-
-    if (color in itemMap) {
-      itemMap[color].push(item);
-    } else {
-      itemMap[color] = [item];
-    }
-  });
-
-  items.forEach((item) => {
-    if (item.type === "shape") {
-      let shape = item.shape;
-
-      if (shape in itemMap) {
-        itemMap[shape].push(item);
-      } else {
-        itemMap[shape] = [item];
-      }
-    }
-  });
-
-  return itemMap;
-}
+// todo(hy) may need a helper to handle further clustering shapes by form
