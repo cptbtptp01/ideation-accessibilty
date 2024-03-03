@@ -7,7 +7,7 @@
     "build": "vite build",
     "serve": "vite preview",
     "test": "jest",
-    "format": "prettier --write src/**/*.ts src/**/*.tsx test/groupingType.test.ts"
+    "format": "prettier --write src/**/*.ts src/**/*.tsx"
   },
   "dependencies": {
     "hex-color-to-color-name": "^1.0.2",

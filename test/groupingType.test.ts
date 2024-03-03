@@ -33,7 +33,7 @@ function groupByTypes(cluster: string[], items: any[]): Map<string, string[]> {
   const typeMap: Map<string, string[]> = new Map();
   for (const id of cluster) {
     const item = items.find((item) => item.id === id);
-    if(item) {
+    if (item) {
       if (item.type in typeMap) {
         typeMap.get(item.type)?.push(id);
       } else {
@@ -51,7 +51,10 @@ describe("clusterByUserDefinedParent", () => {
     const items = [emptyFrame, group];
     const clusters = clusterByParent(items);
     expect(clusters.get("frame1")).toEqual([]);
-    expect(clusters.get("group1")).toEqual(["3458764580516886689", "3458764580516886705"]);
+    expect(clusters.get("group1")).toEqual([
+      "3458764580516886689",
+      "3458764580516886705"
+    ]);
   });
 });
 
