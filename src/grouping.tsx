@@ -146,27 +146,27 @@ function subtractFrameGroupItems(): void {
   }
 }
 
-//   // todo(hy): confirm the logic for floatingSet, use clusterByDistance
-//   // todo(hy): if connectors are present, nodes are put into one cluster
-//   // frameSet does not have parentId
-
 /**
  * Groups items within a cluster based on their color.
  * @param cluster A set of item IDs as strings.
- * @returns A map of color to a list of item IDs.
+ * @returns A list of color groups, each containing a list of item IDs.
  */
-export function groupByColors(cluster: string[]): Map<string, Set<string>> {
-  let colorMap: Map<string, Set<string>> = new Map();
-  cluster.forEach((item) => {
+function groupByColors(cluster: string[]): string[][] {
+  const colorMap: Map<string, string[]> = new Map();
+
+  for (const item of cluster) {
     const color = getColor(item, items);
+
     if (colorMap.has(color)) {
-      colorMap.get(color)!.add(item);
+      colorMap.get(color)!.push(item);
     } else {
-      colorMap.set(color, new Set([item]));
+      colorMap.set(color, [item]);
     }
-    return colorMap;
-  });
-  return colorMap;
+  }
+
+  const colorGroups: string[][] = Array.from(colorMap.values());
+
+  return colorGroups;
 }
 
 /**
@@ -176,12 +176,12 @@ export function groupByColors(cluster: string[]): Map<string, Set<string>> {
  * @example
  *  {
  *  "card": ["id1", "id2", ...],
- *  "shape": ["id3", "id4", ...],
+ *  "shape": [["id3", "id4", ...],[...]],
  *  ...
  *  }
  */
-function groupByTypes(cluster: string[]): Map<string, string[]> {
-  const typeMap: Map<string, string[]> = new Map();
+function groupByTypes(cluster: string[]): Map<string, string[] | string[][]> {
+  const typeMap: Map<string, string[]|string[][]> = new Map();
   for (const id of cluster) {
     const item = items.find((item) => item.id === id);
     if (item) {
@@ -192,6 +192,11 @@ function groupByTypes(cluster: string[]): Map<string, string[]> {
       }
     }
   }
+  // get shape group and update the map
+  // [id1, id2, id3,...] -> [[id1, id2], [id3, id4], ...]
+  const shapeGroup = getShapeGroup(typeMap.get("shape"));
+  typeMap.set("shape", shapeGroup);
+
   return typeMap;
 }
 
@@ -241,4 +246,18 @@ export function getStickyNoteColor(color: string): string {
       return item.color;
     }
   }
+}
+
+// helper function to get shape map
+function getShapeGroup(shapes: string[]): string[][] {
+  const shapeMap: Map<string, string[]> = new Map();
+  for (id of shapes) {
+    const item = items.find((item) => item.id === id);
+    if (item.shape in shapeMap) {
+      shapeMap.get(item.shape)?.push(id);
+    } else {
+      shapeMap.set(item.shape, [id]);
+    }
+  }
+  return Array.from(shapeMap.values());
 }
