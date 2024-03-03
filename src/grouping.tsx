@@ -17,8 +17,9 @@ let groupSet: Set<string> = new Set();
 let floatingSet: Set<string> = new Set();
 
 // Maps and Sets to organize items by their characteristics
+// TODO - zqy: Remove unused containers
 let imageSet: Set<string> = new Set();
-let shapeSet: Set<string> = new Set(); // hold all shapes regardless of form
+// let shapeSet: Set<string> = new Set(); // hold all shapes regardless of form
 let shapeMap: Map<string, Set<string>> = new Map();
 let stickyNoteSet: Set<string> = new Set();
 let cardSet: Set<string> = new Set();
@@ -80,6 +81,16 @@ export async function groupItems() {
  */
 function cleanAllContainers(): void {
   // Clears all data structures to prepare for new clustering
+  frameSet.clear();
+  groupSet.clear();
+  floatingSet.clear();
+  imageSet.clear();
+  // shapeSet.clear();
+  shapeMap.clear();
+  stickyNoteSet.clear();
+  cardSet.clear();
+  textSet.clear();
+  connectorSet.clear();
 }
 
 /**
@@ -222,31 +233,6 @@ function getColor(id: string): string {
     color = "Uncolored";
   }
   return color;
-}
-
-// TODO - zqy: Duplicate function, to be removed
-/**
- * Calculates and returns the central coordinate of an item.
- * @returns A tuple representing the central coordinate (x, y) of the item.
- */
-export function getLocation(id: string, items): [number, number] {
-  const item = items.find((item) => item.id === id);
-  if (item && item.width && item.height) {
-    return [item.x + item.width / 2, item.y + item.height / 2];
-  } else if (item) {
-    console.error(
-      `getLocation: Item with ID ${id} does not have width or height property.`
-    );
-    return [0, 0];
-  } else {
-    console.error(`getLocation: Item with ID ${id} not found.`);
-    return [0, 0];
-  }
-}
-
-// For purpose of testing only, to be deleted
-export function add(a: number, b: number): number {
-  return a + b;
 }
 
 // helper function for sticky note color
