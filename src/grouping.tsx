@@ -2,15 +2,15 @@
 
 import { BoardNode } from "@mirohq/websdk-types";
 import { GetColorName } from "hex-color-to-color-name";
-import { kMeansClusteringWrapper } from "kMeansClustering";
+import { kMeansClusteringWrapper,  } from "kMeansClustering";
 
 import data from "./data/grouping/stickyColor";
 
-// ------------------------------------------------------------ Data Structure ----------------------------------------------------------
+const K_MEANS_TRHESHOLD = 5;
+const GROUPING_TRHESHOLD = 5;
 
 // Global variable to make Miro items accessible throughout the file
 let items: BoardNode[];
-export { items };
 
 // Sets to store IDs of items based on their categorization
 let frameSet: Set<string> = new Set();
@@ -27,20 +27,17 @@ let cardSet: Set<string> = new Set();
 let textSet: Set<string> = new Set();
 let connectorSet: Set<string> = new Set();
 
-// ------------------------------------------------------------ Key Logic ------------------------------------------------------------
-
 /**
- * Groups Miro board items into clusters based on predefined criteria including type, proximity, color, and other attributes.
- * This function shows the entire clustering process, starting from fetching board items to returning a structured collection of item clusters.
+ * Groups Miro board items by rule based algorithm.
  *
  * Process Flow:
  * 1. Fetch all items from the Miro board.
  * 2. Initialize or reset data structures to hold the categorization and clustering of items.
- * 3. Categorize items by their type (e.g., frame, group, floating) to form initial clusters.
+ * 3. Categorize items by their type (e.g., frame, group, floating).
  *    - For floating items, apply spatial clustering based on distance to further refine clusters.
  *    - Cornor case: Impl TBD: if connectors are present, nodes are put into one cluster.
- * 4. Evaluate each cluster's size and, if necessary, further break down this clusters into smaller groups based on color and type.
- *    - Merge or adjust clusters based on evaluation criteria to form the final set of clusters.
+ * 4. Check cluster size and, if necessary, further break down this cluster into smaller groups based on color and type.
+ *    - Merge or adjust clusters based on predefined evaluation criteria.
  *
  * @returns json, TBD...
  */
@@ -56,31 +53,28 @@ export async function groupItems() {
 
   // Initializes the array to hold the final clusters.
   // TODO: See if the data structure needs to be updated.
-  let finalClusters = [];
+  let finalRes = [];
 
   for (const [parentId, cluster] of initialClusters) {
     // tbd, in case we need parent information in final output
     console.log("parentId: ", parentId);
-    if (cluster.size > threshold) {
-      const colorGroups = groupByColors(cluster); // Further categorizes items within a cluster by color.
-      const typeGroups = groupByTypes(cluster); // Further categorizes items within a cluster by type.
-      const result = evaluateClusters(colorGroups, typeGroups); // Evaluates and determine the final clusters to use.
-      finalClusters.push(...result);
+    if (cluster.size > GROUPING_TRHESHOLD) {
+      const colorGroups = groupByColors(cluster);
+      const typeGroups = groupByTypes(cluster);
+      const result = evaluateClusters(colorGroups, typeGroups);
+      finalRes.push(...result);
     } else {
-      finalClusters.push(cluster); // Smaller clusters are pushed directly without further categorization.
+      finalRes.push(cluster); // Smaller clusters...
     }
   }
 
-  return finalClusters; // Returns the structured clusters.
+  return finalRes; // Returns the structured clusters.
 }
 
-// ------------------------------------------------------------ Major Functions ------------------------------------------------------------
-
 /**
- * Implementation will reset global data structures such as frameSet, groupSet, etc.
+ * Clears all containers to prepare for new summarized action.
  */
-function cleanAllContainers(): void {
-  // Clears all data structures to prepare for new clustering
+function cleanAllContainers(): void {// TODO: Remove unused containers
   frameSet.clear();
   groupSet.clear();
   floatingSet.clear();
@@ -95,7 +89,6 @@ function cleanAllContainers(): void {
 
 /**
  * Organizes board items into categorized containers.
- * This might involve populating global sets and maps with item IDs.
  */
 function allocateToContainers(): void {
   for (const item of items) {
@@ -111,7 +104,7 @@ function allocateToContainers(): void {
 }
 
 /**
- * Helper function to allocate items to their respective containers based on type.
+ * Further allocate floating items to their respective type containers.
  */
 function allocateByTypeHelper(item: BoardNode): void {
   if (item.type === "shape") {
@@ -127,12 +120,11 @@ function allocateByTypeHelper(item: BoardNode): void {
     if (typeof this[typeSet] !== "undefined") {
       this[typeSet].add(item.id);
     } else {
-      // Easier to track types we are not handling
+      // Track types we are not handling
       console.error("Item type not supported: ", item.type);
     }
   }
 }
-
 
 /**
  * Clusters board items by group, frame, floating, considering groups and frames as predefined clusters.
@@ -268,4 +260,4 @@ export function getStickyNoteColor(color: string): string {
   }
 }
 
-// todo(hy) may need a helper to handle further clustering shapes by form
+// todo(hy) may need a helper to handle further grouping shapes by form
