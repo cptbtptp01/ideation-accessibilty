@@ -8,13 +8,12 @@ import data from "./data/grouping/stickyColor";
 
 const K_MEANS_TRHESHOLD = 5;
 const GROUPING_TRHESHOLD = 5;
+const PARENT_ID_FOR_FLOATING = "floating";
 
 // Global variable to make Miro items accessible throughout the file
 let items: BoardNode[];
 
 // Sets to store IDs of items based on their categorization
-// let frameSet: Set<string> = new Set();
-// let groupSet: Set<string> = new Set();
 let floatingSet: Set<string> = new Set();
 let frameMap: Map<string, Set<string>> = new Map();
 let groupMap: Map<string, Set<string>> = new Map();
@@ -44,33 +43,55 @@ let groupMap: Map<string, Set<string>> = new Map();
  * @returns json, TBD...
  */
 export async function groupItems() {
-  // TODO: Specify the return type
   items = await miro.board.get(); // Fetches all board items.
 
   cleanAllContainers(); // Resets all containers for a fresh start.
 
   allocateToContainers(); // Sorts items into initial categories based on type.
 
-  const initialClusters = clusterByParent(); // Forms initial clusters based on item types.
-
   // Initializes the array to hold the final clusters.
-  // TODO: See if the data structure needs to be updated.
-  let finalRes = [];
+  let jsonObject = {};
+  processAllItems(jsonObject);
 
-  for (const [parentId, cluster] of initialClusters) {
-    // tbd, in case we need parent information in final output
-    console.log("parentId: ", parentId);
-    if (cluster.size > GROUPING_TRHESHOLD) {
-      const colorGroups = groupByColors(cluster);
-      const typeGroups = groupByTypes(cluster);
+  // Conver to a string without modifying any properties and with an indentation of 2 spaces.
+  return JSON.stringify(jsonObject, null, 2);
+}
+
+/**
+ * Process all items and update the jsonObject.
+ */
+function processAllItems(jsonObject: any) {
+  for (const [parentId, cluster] of frameMap) {
+    processCluster(Array.from(cluster), parentId, jsonObject);
+  }
+  for (const [parentId, cluster] of groupMap) {
+    processCluster(Array.from(cluster), parentId, jsonObject);
+  }
+  processCluster(Array.from(floatingSet), PARENT_ID_FOR_FLOATING, jsonObject);
+}
+
+/**
+ * Process the cluster and update the jsonObject.
+*/
+function processCluster(cluster: string[][], parentId: string, jsonObject: any) {
+  for (const subCluster of cluster) {
+    if (subCluster.length > GROUPING_TRHESHOLD) { // bigger clusters...
+      const colorGroups = groupByColors(subCluster);
+      const typeGroups = groupByTypes(subCluster);
       const result = evaluateClusters(colorGroups, typeGroups);
-      finalRes.push(...result);
-    } else {
-      finalRes.push(cluster); // Smaller clusters...
+      if (jsonObject.hasOwnProperty(parentId)) {
+        jsonObject[parentId].push(...result); // merge with existing value
+      } else {
+        jsonObject[parentId] = result; // assign as new value
+      }
+    } else { // smaller clusters...
+      if (jsonObject.hasOwnProperty(parentId)) {
+        jsonObject[parentId].push(subCluster); // merge with existing value
+      } else {
+        jsonObject[parentId] = [subCluster]; // assign as new value
+      }
     }
   }
-
-  return finalRes; // Returns the structured clusters.
 }
 
 /**
@@ -94,6 +115,13 @@ function cleanAllContainers(): void {// TODO: Remove unused containers
 
 /**
  * Organizes board items into categorized containers.
+ * @example
+ * {
+ *  "frameId1": ["id1", "id2", ...],
+ *  "frameId2": ["id3", "id4", ...],
+ *  "frameId3": ["id5", "id6", ...],
+ *  ...
+ * }
  */
 function allocateToContainers(): void {
   for (const item of items) {
@@ -126,28 +154,28 @@ function subtractFrameGroupItems(): void {
   }
 }
 
-/**
- * Further allocate floating items to their respective type containers.
- */
-function allocateByTypeHelper(item: BoardNode): void {
-  if (item.type === "shape") {
-    shapeSet.add(item.id);
-    const shape = item.shape;
-    if (shape in shapeMap) {
-      shapeMap.get(shape)?.add(item.id);
-    } else {
-      shapeMap.set(shape, new Set([item.id]));
-    }
-  } else {
-    const typeSet = `${item.type}Set`;
-    if (typeof this[typeSet] !== "undefined") {
-      this[typeSet].add(item.id);
-    } else {
-      // Track types we are not handling
-      console.error("Item type not supported: ", item.type);
-    }
-  }
-}
+// /**
+//  * Further allocate floating items to their respective type containers.
+//  */
+// function allocateByTypeHelper(item: BoardNode): void {
+//   if (item.type === "shape") {
+//     shapeSet.add(item.id);
+//     const shape = item.shape;
+//     if (shape in shapeMap) {
+//       shapeMap.get(shape)?.add(item.id);
+//     } else {
+//       shapeMap.set(shape, new Set([item.id]));
+//     }
+//   } else {
+//     const typeSet = `${item.type}Set`;
+//     if (typeof this[typeSet] !== "undefined") {
+//       this[typeSet].add(item.id);
+//     } else {
+//       // Track types we are not handling
+//       console.error("Item type not supported: ", item.type);
+//     }
+//   }
+// }
 
 /**
  * Clusters board items by group, frame, floating, considering groups and frames as predefined clusters.
@@ -162,31 +190,31 @@ function allocateByTypeHelper(item: BoardNode): void {
  *  ...
  * }
  */
-function clusterByParent(): Map<string, string[]> {
-  const clusters: Map<string, string[]> = new Map();
+// function clusterByParent(): Map<string, string[]> {
+//   const clusters: Map<string, string[]> = new Map();
 
-  if (frameSet.size > 0) {
-    for (const parentId of frameSet) {
-      const parent = items.find((item) => item.id === parentId);
-      const childrenIds = parent.childrenIds;
-      clusters.set(parentId, childrenIds);
-    }
-  }
+//   if (frameSet.size > 0) {
+//     for (const parentId of frameSet) {
+//       const parent = items.find((item) => item.id === parentId);
+//       const childrenIds = parent.childrenIds;
+//       clusters.set(parentId, childrenIds);
+//     }
+//   }
 
-  if (groupSet.size > 0) {
-    for (const parentId of groupSet) {
-      const parent = items.find((item) => item.id === parentId);
-      const childrenIds = parent.itemsIds;
-      clusters.set(parentId, childrenIds);
-    }
-  }
+//   if (groupSet.size > 0) {
+//     for (const parentId of groupSet) {
+//       const parent = items.find((item) => item.id === parentId);
+//       const childrenIds = parent.itemsIds;
+//       clusters.set(parentId, childrenIds);
+//     }
+//   }
 
-  // todo(hy): confirm the logic for floatingSet, use clusterByDistance
-  // todo(hy): if connectors are present, nodes are put into one cluster
-  // frameSet does not have parentId
+//   // todo(hy): confirm the logic for floatingSet, use clusterByDistance
+//   // todo(hy): if connectors are present, nodes are put into one cluster
+//   // frameSet does not have parentId
 
-  return clusters;
-};
+//   return clusters;
+// };
 
 /**
  * Groups items within a cluster based on their color.
