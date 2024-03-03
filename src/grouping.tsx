@@ -9,7 +9,7 @@ import data from "./data/grouping/stickyColor";
 const K_MEANS_TRHESHOLD = 5;
 const GROUPING_TRHESHOLD = 5;
 const PARENT_ID_FOR_FLOATING = "floating";
-const NO_TEXT_MESSAGE = "No text available"
+const NO_CONTENT_MSG = "No content available"
 
 // Global variable to make Miro items accessible throughout the file
 let items: BoardNode[]; // TODO: Consider to use map
@@ -91,8 +91,8 @@ function convertIdsToString(result: string[][], parentId: string): string[][] {
   for (let i = 0; i < result.length; i++) {
     for (let j = 0; j < result[i].length; j++) {
       const item = items.find((item) => item.id === result[i][j]);
-      if (item.text && item.text !== "") {
-        result[i][j] = item.text;
+      if (item.content && item.content !== "") {
+        result[i][j] = item.content;
       } else {
         result[i][j] = NO_TEXT_MESSAGE; // TODO: Better way to handle items with no text?
       }
