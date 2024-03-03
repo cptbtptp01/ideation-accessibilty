@@ -2,168 +2,153 @@
 
 import { BoardNode } from "@mirohq/websdk-types";
 import { GetColorName } from "hex-color-to-color-name";
-import { kMeansClusteringWrapper,  } from "kMeansClustering";
+import { kMeansClusteringWrapper, } from "kMeansClustering";
 
 import data from "./data/grouping/stickyColor";
 
 const K_MEANS_TRHESHOLD = 5;
 const GROUPING_TRHESHOLD = 5;
+const PARENT_ID_FOR_FLOATING = "floating";
 
 // Global variable to make Miro items accessible throughout the file
 let items: BoardNode[];
 
 // Sets to store IDs of items based on their categorization
-let frameSet: Set<string> = new Set();
-let groupSet: Set<string> = new Set();
 let floatingSet: Set<string> = new Set();
-
-// Maps and Sets to organize items by their characteristics
-// TODO - zqy: Remove unused containers
-let imageSet: Set<string> = new Set();
-let shapeSet: Set<string> = new Set(); // hold all shapes regardless of form
-let shapeMap: Map<string, Set<string>> = new Map();
-let stickyNoteSet: Set<string> = new Set();
-let cardSet: Set<string> = new Set();
-let textSet: Set<string> = new Set();
-let connectorSet: Set<string> = new Set();
+let frameMap: Map<string, Set<string>> = new Map();
+let groupMap: Map<string, Set<string>> = new Map();
 
 /**
  * Groups Miro board items by rule based algorithm.
- *
- * Process Flow:
- * 1. Fetch all items from the Miro board.
- * 2. Initialize or reset data structures to hold the categorization and clustering of items.
- * 3. Categorize items by their type (e.g., frame, group, floating).
- *    - For floating items, apply spatial clustering based on distance to further refine clusters.
- *    - Cornor case: Impl TBD: if connectors are present, nodes are put into one cluster.
- * 4. Check cluster size and, if necessary, further break down this cluster into smaller groups based on color and type.
- *    - Merge or adjust clusters based on predefined evaluation criteria.
- *
- * @returns json, TBD...
  */
 export async function groupItems() {
-  // TODO: Specify the return type
-  items = await miro.board.get(); // Fetches all board items.
+  // Fetches all board items
+  items = await miro.board.get();
 
-  cleanAllContainers(); // Resets all containers for a fresh start.
+  // Resets all containers for a fresh start
+  cleanAllContainers();
 
-  allocateToContainers(); // Sorts items into initial categories based on type.
+  // Sorts items into proper containers
+  allocateToContainers();
 
-  const initialClusters = clusterByParent(); // Forms initial clusters based on item types.
+  // Initializes the array to hold the final clusters
+  let jsonObject = {};
+  processAllItems(jsonObject);
 
-  // Initializes the array to hold the final clusters.
-  // TODO: See if the data structure needs to be updated.
-  let finalRes = [];
+  // Conver to a string without modifying any properties and with an indentation of 2 spaces
+  return JSON.stringify(jsonObject, null, 2);
+}
 
-  for (const [parentId, cluster] of initialClusters) {
-    // tbd, in case we need parent information in final output
-    console.log("parentId: ", parentId);
-    if (cluster.size > GROUPING_TRHESHOLD) {
-      const colorGroups = groupByColors(cluster);
-      const typeGroups = groupByTypes(cluster);
+/**
+ * Process all array/sets of items and update the jsonObject.
+ * First apply spatial clustering based on distance to further refine clusters.
+ * Seond, further break down this cluster into smaller groups based on color and type if applicable.
+ */
+function processAllItems(jsonObject: any) {
+  for (const [parentId, cluster] of frameMap) {
+    processCluster(Array.from(cluster), parentId, jsonObject);
+  }
+  for (const [parentId, cluster] of groupMap) {
+    processCluster(Array.from(cluster), parentId, jsonObject);
+  }
+  processCluster(Array.from(floatingSet), PARENT_ID_FOR_FLOATING, jsonObject);
+}
+
+/**
+ * Process one array/set and update the jsonObject.
+*/
+function processCluster(cluster: string[][], parentId: string, jsonObject: any) {
+  const clusters: string[][] = kMeansClusteringWrapper(cluster, items); // TODO: handling connnectors (maybe later)
+  for (const subCluster of clusters) {
+    if (subCluster.length > GROUPING_TRHESHOLD) { // bigger clusters...
+      const colorGroups = groupByColors(subCluster);
+      const typeGroups = groupByTypes(subCluster);
       const result = evaluateClusters(colorGroups, typeGroups);
-      finalRes.push(...result);
-    } else {
-      finalRes.push(cluster); // Smaller clusters...
+      pushToJsonObject(result, parentId, jsonObject);
+    } else { // smaller clusters...
+      pushToJsonObject(subCluster, parentId, jsonObject);
     }
   }
+}
 
-  return finalRes; // Returns the structured clusters.
+/**
+ * Pushes the result (not ids, but the actual text) to the jsonObject.
+ */
+function pushToJsonObject(result: string[][], parentId: string, jsonObject: any) {
+  const result = convertIdsToString(result, parentId); // TODO: type tbd
+  if (jsonObject.hasOwnProperty(parentId)) {
+    jsonObject[parentId].push(result); // merge with existing value
+  } else {
+    jsonObject[parentId] = result; // assign as new value
+  }
+}
+
+/**
+ * Convert the IDs to actual text.
+ */
+function convertIdsToString(result: string[][], parentId: string): string[][]{
+  // TODO: implementation to be refined
+  for (let i = 0; i < result.length; i++) {
+    for (let j = 0; j < result[i].length; j++) {
+      result[i][j] = items.find((item) => item.id === result[i][j]).text;
+    }
+  }
+  return result;
 }
 
 /**
  * Clears all containers to prepare for new summarized action.
  */
-function cleanAllContainers(): void {// TODO: Remove unused containers
+function cleanAllContainers(): void {
+  frameMap.clear();
+  groupMap.clear();
   frameSet.clear();
-  groupSet.clear();
-  floatingSet.clear();
-  imageSet.clear();
-  shapeSet.clear();
-  shapeMap.clear();
-  stickyNoteSet.clear();
-  cardSet.clear();
-  textSet.clear();
-  connectorSet.clear();
 }
 
 /**
  * Organizes board items into categorized containers.
- */
-function allocateToContainers(): void {
-  for (const item of items) {
-    if (item.type === "frame") {
-      frameSet.add(item.id);
-    } else if (item.type === "group") {
-      groupSet.add(item.id);
-    } else {
-      floatingSet.add(item.id);
-      allocateByTypeHelper(item);
-    }
-  }
-}
-
-/**
- * Further allocate floating items to their respective type containers.
- */
-function allocateByTypeHelper(item: BoardNode): void {
-  if (item.type === "shape") {
-    shapeSet.add(item.id);
-    const shape = item.shape;
-    if (shape in shapeMap) {
-      shapeMap.get(shape)?.add(item.id);
-    } else {
-      shapeMap.set(shape, new Set([item.id]));
-    }
-  } else {
-    const typeSet = `${item.type}Set`;
-    if (typeof this[typeSet] !== "undefined") {
-      this[typeSet].add(item.id);
-    } else {
-      // Track types we are not handling
-      console.error("Item type not supported: ", item.type);
-    }
-  }
-}
-
-/**
- * Clusters board items by group, frame, floating, considering groups and frames as predefined clusters.
- * Floating items are clustered based on proximity using clusterByDistance.
- *
- * @returns A map of clusters, with keys as parentIDs, and values as maps of item types to item IDs.
  * @example
  * {
  *  "frameId1": ["id1", "id2", ...],
  *  "frameId2": ["id3", "id4", ...],
- *  "groupId1": ["id5", "id6", ...],
+ *  "frameId3": ["id5", "id6", ...],
  *  ...
  * }
  */
-function clusterByParent(): Map<string, string[]> {
-  const clusters: Map<string, string[]> = new Map();
-
-  if (frameSet.size > 0) {
-    for (const parentId of frameSet) {
-      const parent = items.find((item) => item.id === parentId);
-      const childrenIds = parent.childrenIds;
-      clusters.set(parentId, childrenIds);
+function allocateToContainers(): void {
+  for (const item of items) {
+    if (item.type === "frame") {
+      const childrenIds = item.childrenIds;
+      frameMap.set(item.id, new Set(childrenIds));
+    } else if (item.type === "group") {
+      const childrenIds = item.itemsIds;
+      groupMap.set(item.id, new Set(childrenIds));
+    } else {
+      floatingSet.add(item.id);
     }
   }
+  subtractFrameGroupItems();
+}
 
-  if (groupSet.size > 0) {
-    for (const parentId of groupSet) {
-      const parent = items.find((item) => item.id === parentId);
-      const childrenIds = parent.itemsIds;
-      clusters.set(parentId, childrenIds);
+/**
+ * Helper function to remove items belonging to a group or frame from the floating set.
+ */
+function subtractFrameGroupItems(): void {
+  for (const children of frameMap.values()) {
+    for (const child of children) {
+      floatingSet.delete(child);
     }
   }
+  for (const children of groupMap.values()) {
+    for (const child of children) {
+      floatingSet.delete(child);
+    }
+  }
+}
 
-  // todo(hy): confirm the logic for floatingSet, use clusterByDistance
-  // todo(hy): if connectors are present, nodes are put into one cluster
-  // frameSet does not have parentId
-
-  return clusters;
-};
+//   // todo(hy): confirm the logic for floatingSet, use clusterByDistance
+//   // todo(hy): if connectors are present, nodes are put into one cluster
+//   // frameSet does not have parentId
 
 /**
  * Groups items within a cluster based on their color.
@@ -218,12 +203,10 @@ function evaluateClusters(
   colorGroups: string[][],
   typeGroups: string[][]
 ): string[][] {
-  // Impl
+  // TODO: Impl
   // Maybe comparing, combining, or selecting clusters based on the evaluation rules
   return [];
 }
-
-// ------------------------------------------------------------ Helpers ------------------------------------------------------------
 
 /**
  * Retrieves the color of an item by its ID.
@@ -259,5 +242,3 @@ export function getStickyNoteColor(color: string): string {
     }
   }
 }
-
-// todo(hy) may need a helper to handle further grouping shapes by form
