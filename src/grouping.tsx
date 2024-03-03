@@ -9,9 +9,10 @@ import data from "./data/grouping/stickyColor";
 const K_MEANS_TRHESHOLD = 5;
 const GROUPING_TRHESHOLD = 5;
 const PARENT_ID_FOR_FLOATING = "floating";
+const NO_CONTENT_MSG = "No content available"
 
 // Global variable to make Miro items accessible throughout the file
-let items: BoardNode[];
+let items: BoardNode[]; // TODO: Consider to use map
 
 // Sets to store IDs of items based on their categorization
 let floatingSet: Set<string> = new Set();
@@ -86,11 +87,15 @@ function pushToJsonObject(result: string[][], parentId: string, jsonObject: any)
 /**
  * Convert the IDs to actual text.
  */
-function convertIdsToString(result: string[][], parentId: string): string[][]{
-  // TODO: implementation to be refined
+function convertIdsToString(result: string[][], parentId: string): string[][] {
   for (let i = 0; i < result.length; i++) {
     for (let j = 0; j < result[i].length; j++) {
-      result[i][j] = items.find((item) => item.id === result[i][j]).text;
+      const item = items.find((item) => item.id === result[i][j]);
+      if (item.content && item.content !== "") {
+        result[i][j] = item.content;
+      } else {
+        result[i][j] = NO_TEXT_MESSAGE; // TODO: Better way to handle items with no text?
+      }
     }
   }
   return result;
@@ -181,7 +186,7 @@ function groupByColors(cluster: string[]): string[][] {
  *  }
  */
 function groupByTypes(cluster: string[]): Map<string, string[] | string[][]> {
-  const typeMap: Map<string, string[]|string[][]> = new Map();
+  const typeMap: Map<string, string[] | string[][]> = new Map();
   for (const id of cluster) {
     const item = items.find((item) => item.id === id);
     if (item) {
@@ -208,9 +213,16 @@ function evaluateClusters(
   colorGroups: string[][],
   typeGroups: string[][]
 ): string[][] {
-  // TODO: Impl
+  // TODO - zqy: Implementation
   // Maybe comparing, combining, or selecting clusters based on the evaluation rules
-  return [];
+  // For now, just randomly return one of the groups depends on random number
+  // get random number of either 0 or 1
+  const random = Math.floor(Math.random() * 2);
+  if (random === 0) {
+    return colorGroups;
+  } else {
+    return typeGroups;
+  }
 }
 
 /**
