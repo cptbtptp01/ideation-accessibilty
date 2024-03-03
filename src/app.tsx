@@ -8,22 +8,20 @@ import GroupingList from "./components/groupingList";
 import ActivityList from "./components/activityList"
 
 const App: React.FC = () => {
-  const [groups, setGroups] = React.useState<{
-    [key: string]: BoardNode[];
-  }>({});
+  // groupItems returns a JSON object
+  const [groups, setGroups] = React.useState<string>("");
 
   const [messages, setMessages] = React.useState<string[]>([]);
 
   const handleUpdateGrouping = async () => {
-    const updatedItemMap = await groupItems();
-    setGroups(updatedItemMap);
+    const updatedJson = await groupItems(); // return Promise<string>
+    setGroups(updatedJson);
   };
 
   React.useEffect(() => {
-    // WIP: structure overview feature
     async function fetchData() {
-      const itemMap = await groupItems();
-      setGroups(itemMap);
+      const groupingJson = await groupItems();
+      setGroups(groupingJson);
     }
 
     fetchData();
