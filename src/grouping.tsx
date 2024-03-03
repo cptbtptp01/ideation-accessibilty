@@ -5,7 +5,6 @@ import { GetColorName } from "hex-color-to-color-name";
 import { kMeansClusteringWrapper, } from "kMeansClustering";
 
 import data from "./data/grouping/stickyColor";
-import { get } from "http";
 
 const K_MEANS_TRHESHOLD = 5;
 const GROUPING_TRHESHOLD = 5;
