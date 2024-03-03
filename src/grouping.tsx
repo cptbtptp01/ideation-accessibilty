@@ -2,6 +2,7 @@
 
 import { BoardNode } from "@mirohq/websdk-types";
 import { GetColorName } from "hex-color-to-color-name";
+import { kMeansClusteringWrapper } from "kMeansClustering";
 
 import data from "./data/grouping/stickyColor";
 
@@ -54,7 +55,6 @@ export async function groupItems() {
   const initialClusters = clusterByParent(); // Forms initial clusters based on item types.
 
   // Initializes the array to hold the final clusters.
-  // Each cluster can be List[id] or List[List[id]].
   // TODO: See if the data structure needs to be updated.
   let finalClusters = [];
 
@@ -97,7 +97,7 @@ function cleanAllContainers(): void {
  * Organizes board items into categorized containers.
  * This might involve populating global sets and maps with item IDs.
  */
-function allocateToContainers(): void { // TODO - zqy: To be refactored
+function allocateToContainers(): void {
   for (const item of items) {
     if (item.type === "frame") {
       frameSet.add(item.id);
@@ -114,9 +114,6 @@ function allocateToContainers(): void { // TODO - zqy: To be refactored
  * Helper function to allocate items to their respective containers based on type.
  */
 function allocateByTypeHelper(item: BoardNode): void {
-  if (item.type === "image") {
-    imageSet.add(item.id);
-  }
   if (item.type === "shape") {
     shapeSet.add(item.id);
     const shape = item.shape;
@@ -125,18 +122,14 @@ function allocateByTypeHelper(item: BoardNode): void {
     } else {
       shapeMap.set(shape, new Set([item.id]));
     }
-  }
-  if (item.type === "sticky_note") {
-    stickyNoteSet.add(item.id);
-  }
-  if (item.type === "card") {
-    cardSet.add(item.id);
-  }
-  if (item.type === "text") {
-    textSet.add(item.id);
-  }
-  if (item.type === "connector") {
-    connectorSet.add(item.id);
+  } else {
+    const typeSet = `${item.type}Set`;
+    if (typeof this[typeSet] !== "undefined") {
+      this[typeSet].add(item.id);
+    } else {
+      // Easier to track types we are not handling
+      console.error("Item type not supported: ", item.type);
+    }
   }
 }
 
@@ -179,15 +172,6 @@ function clusterByParent(): Map<string, string[]> {
 
   return clusters;
 };
-
-/**
- * Clusters items based on spatial proximity.
- * @returns A list of clusters, each cluster containing item IDs based on proximity.
- */
-function clusterByDistance(initialCluster: string[]): string[][] {
-  // Implementation will cluster floating items based on spatial proximity.
-  return []; // Placeholder return
-}
 
 /**
  * Groups items within a cluster based on their color.
