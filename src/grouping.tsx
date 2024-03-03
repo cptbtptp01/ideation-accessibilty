@@ -19,7 +19,7 @@ let floatingSet: Set<string> = new Set();
 // Maps and Sets to organize items by their characteristics
 // TODO - zqy: Remove unused containers
 let imageSet: Set<string> = new Set();
-// let shapeSet: Set<string> = new Set(); // hold all shapes regardless of form
+let shapeSet: Set<string> = new Set(); // hold all shapes regardless of form
 let shapeMap: Map<string, Set<string>> = new Map();
 let stickyNoteSet: Set<string> = new Set();
 let cardSet: Set<string> = new Set();
@@ -49,7 +49,7 @@ export async function groupItems() {
 
   cleanAllContainers(); // Resets all containers for a fresh start.
 
-  preprocessingByType(); // Sorts items into initial categories based on type.
+  allocateToContainers(); // Sorts items into initial categories based on type.
 
   const initialClusters = clusterByParent(); // Forms initial clusters based on item types.
 
@@ -85,7 +85,7 @@ function cleanAllContainers(): void {
   groupSet.clear();
   floatingSet.clear();
   imageSet.clear();
-  // shapeSet.clear();
+  shapeSet.clear();
   shapeMap.clear();
   stickyNoteSet.clear();
   cardSet.clear();
@@ -94,12 +94,52 @@ function cleanAllContainers(): void {
 }
 
 /**
- * Organizes board items into categorized containers based on their type.
+ * Organizes board items into categorized containers.
  * This might involve populating global sets and maps with item IDs.
  */
-function preprocessingByType(): void {
-  // Organizes items into sets and maps based on their type
+function allocateToContainers(): void { // TODO - zqy: To be refactored
+  for (const item of items) {
+    if (item.type === "frame") {
+      frameSet.add(item.id);
+    } else if (item.type === "group") {
+      groupSet.add(item.id);
+    } else {
+      floatingSet.add(item.id);
+      allocateByTypeHelper(item);
+    }
+  }
 }
+
+/**
+ * Helper function to allocate items to their respective containers based on type.
+ */
+function allocateByTypeHelper(item: BoardNode): void {
+  if (item.type === "image") {
+    imageSet.add(item.id);
+  }
+  if (item.type === "shape") {
+    shapeSet.add(item.id);
+    const shape = item.shape;
+    if (shape in shapeMap) {
+      shapeMap.get(shape)?.add(item.id);
+    } else {
+      shapeMap.set(shape, new Set([item.id]));
+    }
+  }
+  if (item.type === "sticky_note") {
+    stickyNoteSet.add(item.id);
+  }
+  if (item.type === "card") {
+    cardSet.add(item.id);
+  }
+  if (item.type === "text") {
+    textSet.add(item.id);
+  }
+  if (item.type === "connector") {
+    connectorSet.add(item.id);
+  }
+}
+
 
 /**
  * Clusters board items by group, frame, floating, considering groups and frames as predefined clusters.
@@ -115,7 +155,7 @@ function preprocessingByType(): void {
  * }
  */
 function clusterByParent(): Map<string, string[]> {
-  const clusters : Map<string, string[]> = new Map();
+  const clusters: Map<string, string[]> = new Map();
 
   if (frameSet.size > 0) {
     for (const parentId of frameSet) {
@@ -154,7 +194,7 @@ function clusterByDistance(initialCluster: string[]): string[][] {
  * @param cluster A set of item IDs as strings.
  * @returns A map of color to a list of item IDs.
  */
-export function groupByColors(cluster: string[]):Map<string, Set<string>>{
+export function groupByColors(cluster: string[]): Map<string, Set<string>> {
   let colorMap: Map<string, Set<string>> = new Map();
   cluster.forEach((item) => {
     const color = getColor(item, items);
@@ -236,7 +276,7 @@ function getColor(id: string): string {
 }
 
 // helper function for sticky note color
-export function getStickyNoteColor(color:string):string {
+export function getStickyNoteColor(color: string): string {
   for (const item of data) {
     if (item.fillColor === color) {
       return item.color;
