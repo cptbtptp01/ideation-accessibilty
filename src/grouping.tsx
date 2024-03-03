@@ -17,6 +17,8 @@ let groupSet: Set<string> = new Set();
 let floatingSet: Set<string> = new Set();
 
 // Maps and Sets to organize items by their characteristics
+let imageSet: Set<string> = new Set();
+let shapeSet: Set<string> = new Set(); // hold all shapes regardless of form
 let shapeMap: Map<string, Set<string>> = new Map();
 let stickyNoteSet: Set<string> = new Set();
 let cardSet: Set<string> = new Set();
@@ -48,15 +50,16 @@ export async function groupItems() {
 
   preprocessingByType(); // Sorts items into initial categories based on type.
 
-  const initialClusters = clusterByType(); // Forms initial clusters based on item types.
+  const initialClusters = clusterByParent(); // Forms initial clusters based on item types.
 
   // Initializes the array to hold the final clusters.
   // Each cluster can be List[id] or List[List[id]].
   // TODO: See if the data structure needs to be updated.
   let finalClusters = [];
 
-  // Further categorizes and evaluates the initial clusters
-  for (const cluster of initialClusters) {
+  for (const [parentId, cluster] of initialClusters) {
+    // tbd, in case we need parent information in final output
+    console.log("parentId: ", parentId);
     if (cluster.size > threshold) {
       const colorGroups = groupByColors(cluster); // Further categorizes items within a cluster by color.
       const typeGroups = groupByTypes(cluster); // Further categorizes items within a cluster by type.
@@ -88,22 +91,42 @@ function preprocessingByType(): void {
 }
 
 /**
- * Initial clustering
  * Clusters board items by group, frame, floating, considering groups and frames as predefined clusters.
  * Floating items are clustered based on proximity using clusterByDistance.
+ *
+ * @returns A map of clusters, with keys as parentIDs, and values as maps of item types to item IDs.
+ * @example
+ * {
+ *  "frameId1": ["id1", "id2", ...],
+ *  "frameId2": ["id3", "id4", ...],
+ *  "groupId1": ["id5", "id6", ...],
+ *  ...
+ * }
  */
-function clusterByType(): void {
-  items.forEach((item) => {
-    if (item.type === "frame") {
-      frameSet.add(item.id);
-    } else if (item.type === "group") {
-      groupSet.add(item.id);
-    } else {
-      // tbd for future implementation
-      floatingSet.add(item.id);
-    }
-  });
-}
+function clusterByParent(): Map<string, string[]> {
+  const clusters : Map<string, string[]> = new Map();
+
+  for (const parentId of frameSet) {
+    const parent = items.find(item => item.id === parentId);
+    const childrenIds = parent.childrenIds;
+    clusters.set(parentId, childrenIds);
+  }
+
+  for (const parentId of groupSet) {
+    const parent = items.find(item => item.id === parentId);
+    const childrenIds = parent.itemsIds;
+    clusters.set(parentId, childrenIds);
+  }
+
+  // todo(hy): confirm the logic for floatingSet
+  // todo(hy): if connectors are present, nodes are put into one cluster
+  for (const parentId of floatingSet) {
+    const childrenIds = clusterByDistance(floatingSet);
+    clusters.set(parentId, childrenIds);
+  }
+
+  return clusters;
+};
 
 /**
  * Clusters items based on spatial proximity.
@@ -116,10 +139,10 @@ function clusterByDistance(initialCluster: string[]): string[][] {
 
 /**
  * Groups items within a cluster based on their color.
- * @param cluster An array of item IDs as strings.
+ * @param cluster A set of item IDs as strings.
  * @returns A map of color to a list of item IDs.
  */
-export function groupByColors(cluster: string[]): Map<string, Set<string>> {
+export function groupByColors(cluster: Set<string>):Map<string, Set<string>>{
   let colorMap: Map<string, Set<string>> = new Map();
   cluster.forEach((item) => {
     const color = getColor(item, items);
@@ -136,11 +159,25 @@ export function groupByColors(cluster: string[]): Map<string, Set<string>> {
 /**
  * Groups items within a cluster based on their type.
  * @param cluster An array of item IDs as strings.
- * @returns A list of clusters, each cluster is a list of item IDs.
+ * @returns A map of type to a list of item IDs.
+ * @example
+ *  {
+ *  "card": ["id1", "id2", ...],
+ *  "shape": ["id3", "id4", ...],
+ *  ...
+ *  }
  */
-function groupByTypes(cluster: string[]): string[][] {
-  // Implementation here...
-  return [];
+function groupByTypes(cluster: string[]): Map<string, string[]> {
+  const typeMap: Map<string, string[]> = new Map();
+  for (const id of cluster) {
+    const item = items.find((item) => item.id === id);
+    if (item.type in typeMap) {
+      typeMap.get(item.type)?.push(id);
+    } else {
+      typeMap.set(item.type, [id]);
+    }
+  }
+  return typeMap;
 }
 
 /**
@@ -202,6 +239,50 @@ export function getLocation(id: string, items): [number, number] {
     console.error(`getLocation: Item with ID ${id} not found.`);
     return [0, 0];
   }
+}
+
+// For purpose of testing only, to be deleted
+export function add(a: number, b: number): number {
+  return a + b;
+}
+
+// helper function for sticky note color
+export function getStickyNoteColor(color:string):string {
+  for (const item of data) {
+    if (item.fillColor === color) {
+      return item.color;
+    }
+  }
+}
+
+// helper to group a single parent's children by type
+function getChildren(childrenIds: Set<string>): Map<string, string[]> {
+  const childrenTypeMap: Map<string, string[]> = new Map([
+    ["image", []],
+    ["shape", []],
+    ["sticky_note", []],
+    ["card", []],
+    ["text", []],
+    ["connector", []]
+  ]);
+
+  for (const childId of childrenIds) {
+    if (imageSet.has(childId)) {
+      childrenTypeMap.get("image")?.push(childId);
+    } else if (shapeSet.has(childId)) {
+      childrenTypeMap.get("shape")?.push(childId);
+    } else if (stickyNoteSet.has(childId)) {
+      childrenTypeMap.get("sticky_note")?.push(childId);
+    } else if (cardSet.has(childId)) {
+      childrenTypeMap.get("card")?.push(childId);
+    } else if (textSet.has(childId)) {
+      childrenTypeMap.get("text")?.push(childId);
+    } else if (connectorSet.has(childId)) {
+      childrenTypeMap.get("connector")?.push(childId);
+    }
+  }
+
+  return childrenTypeMap;
 }
 
 // ------------------------------------------------------------ OLD ------------------------------------------------------------
