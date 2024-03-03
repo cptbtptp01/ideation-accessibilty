@@ -2,14 +2,15 @@
 
 import { BoardNode } from "@mirohq/websdk-types";
 import { GetColorName } from "hex-color-to-color-name";
+import { kMeansClusteringWrapper,  } from "kMeansClustering";
 
 import data from "./data/grouping/stickyColor";
 
-// ------------------------------------------------------------ Data Structure ----------------------------------------------------------
+const K_MEANS_TRHESHOLD = 5;
+const GROUPING_TRHESHOLD = 5;
 
 // Global variable to make Miro items accessible throughout the file
 let items: BoardNode[];
-export { items };
 
 // Sets to store IDs of items based on their categorization
 let frameSet: Set<string> = new Set();
@@ -17,6 +18,7 @@ let groupSet: Set<string> = new Set();
 let floatingSet: Set<string> = new Set();
 
 // Maps and Sets to organize items by their characteristics
+// TODO - zqy: Remove unused containers
 let imageSet: Set<string> = new Set();
 let shapeSet: Set<string> = new Set(); // hold all shapes regardless of form
 let shapeMap: Map<string, Set<string>> = new Map();
@@ -25,20 +27,17 @@ let cardSet: Set<string> = new Set();
 let textSet: Set<string> = new Set();
 let connectorSet: Set<string> = new Set();
 
-// ------------------------------------------------------------ Key Logic ------------------------------------------------------------
-
 /**
- * Groups Miro board items into clusters based on predefined criteria including type, proximity, color, and other attributes.
- * This function shows the entire clustering process, starting from fetching board items to returning a structured collection of item clusters.
+ * Groups Miro board items by rule based algorithm.
  *
  * Process Flow:
  * 1. Fetch all items from the Miro board.
  * 2. Initialize or reset data structures to hold the categorization and clustering of items.
- * 3. Categorize items by their type (e.g., frame, group, floating) to form initial clusters.
+ * 3. Categorize items by their type (e.g., frame, group, floating).
  *    - For floating items, apply spatial clustering based on distance to further refine clusters.
  *    - Cornor case: Impl TBD: if connectors are present, nodes are put into one cluster.
- * 4. Evaluate each cluster's size and, if necessary, further break down this clusters into smaller groups based on color and type.
- *    - Merge or adjust clusters based on evaluation criteria to form the final set of clusters.
+ * 4. Check cluster size and, if necessary, further break down this cluster into smaller groups based on color and type.
+ *    - Merge or adjust clusters based on predefined evaluation criteria.
  *
  * @returns json, TBD...
  */
@@ -48,46 +47,83 @@ export async function groupItems() {
 
   cleanAllContainers(); // Resets all containers for a fresh start.
 
-  preprocessingByType(); // Sorts items into initial categories based on type.
+  allocateToContainers(); // Sorts items into initial categories based on type.
 
   const initialClusters = clusterByParent(); // Forms initial clusters based on item types.
 
   // Initializes the array to hold the final clusters.
-  // Each cluster can be List[id] or List[List[id]].
   // TODO: See if the data structure needs to be updated.
-  let finalClusters = [];
+  let finalRes = [];
 
   for (const [parentId, cluster] of initialClusters) {
     // tbd, in case we need parent information in final output
     console.log("parentId: ", parentId);
-    if (cluster.size > threshold) {
-      const colorGroups = groupByColors(cluster); // Further categorizes items within a cluster by color.
-      const typeGroups = groupByTypes(cluster); // Further categorizes items within a cluster by type.
-      const result = evaluateClusters(colorGroups, typeGroups); // Evaluates and determine the final clusters to use.
-      finalClusters.push(...result);
+    if (cluster.size > GROUPING_TRHESHOLD) {
+      const colorGroups = groupByColors(cluster);
+      const typeGroups = groupByTypes(cluster);
+      const result = evaluateClusters(colorGroups, typeGroups);
+      finalRes.push(...result);
     } else {
-      finalClusters.push(cluster); // Smaller clusters are pushed directly without further categorization.
+      finalRes.push(cluster); // Smaller clusters...
     }
   }
 
-  return finalClusters; // Returns the structured clusters.
-}
-
-// ------------------------------------------------------------ Major Functions ------------------------------------------------------------
-
-/**
- * Implementation will reset global data structures such as frameSet, groupSet, etc.
- */
-function cleanAllContainers(): void {
-  // Clears all data structures to prepare for new clustering
+  return finalRes; // Returns the structured clusters.
 }
 
 /**
- * Organizes board items into categorized containers based on their type.
- * This might involve populating global sets and maps with item IDs.
+ * Clears all containers to prepare for new summarized action.
  */
-function preprocessingByType(): void {
-  // Organizes items into sets and maps based on their type
+function cleanAllContainers(): void {// TODO: Remove unused containers
+  frameSet.clear();
+  groupSet.clear();
+  floatingSet.clear();
+  imageSet.clear();
+  shapeSet.clear();
+  shapeMap.clear();
+  stickyNoteSet.clear();
+  cardSet.clear();
+  textSet.clear();
+  connectorSet.clear();
+}
+
+/**
+ * Organizes board items into categorized containers.
+ */
+function allocateToContainers(): void {
+  for (const item of items) {
+    if (item.type === "frame") {
+      frameSet.add(item.id);
+    } else if (item.type === "group") {
+      groupSet.add(item.id);
+    } else {
+      floatingSet.add(item.id);
+      allocateByTypeHelper(item);
+    }
+  }
+}
+
+/**
+ * Further allocate floating items to their respective type containers.
+ */
+function allocateByTypeHelper(item: BoardNode): void {
+  if (item.type === "shape") {
+    shapeSet.add(item.id);
+    const shape = item.shape;
+    if (shape in shapeMap) {
+      shapeMap.get(shape)?.add(item.id);
+    } else {
+      shapeMap.set(shape, new Set([item.id]));
+    }
+  } else {
+    const typeSet = `${item.type}Set`;
+    if (typeof this[typeSet] !== "undefined") {
+      this[typeSet].add(item.id);
+    } else {
+      // Track types we are not handling
+      console.error("Item type not supported: ", item.type);
+    }
+  }
 }
 
 /**
@@ -104,7 +140,7 @@ function preprocessingByType(): void {
  * }
  */
 function clusterByParent(): Map<string, string[]> {
-  const clusters : Map<string, string[]> = new Map();
+  const clusters: Map<string, string[]> = new Map();
 
   if (frameSet.size > 0) {
     for (const parentId of frameSet) {
@@ -130,20 +166,11 @@ function clusterByParent(): Map<string, string[]> {
 };
 
 /**
- * Clusters items based on spatial proximity.
- * @returns A list of clusters, each cluster containing item IDs based on proximity.
- */
-function clusterByDistance(initialCluster: string[]): string[][] {
-  // Implementation will cluster floating items based on spatial proximity.
-  return []; // Placeholder return
-}
-
-/**
  * Groups items within a cluster based on their color.
  * @param cluster A set of item IDs as strings.
  * @returns A map of color to a list of item IDs.
  */
-export function groupByColors(cluster: string[]):Map<string, Set<string>>{
+export function groupByColors(cluster: string[]): Map<string, Set<string>> {
   let colorMap: Map<string, Set<string>> = new Map();
   cluster.forEach((item) => {
     const color = getColor(item, items);
@@ -224,33 +251,8 @@ function getColor(id: string): string {
   return color;
 }
 
-// TODO - zqy: Duplicate function, to be removed
-/**
- * Calculates and returns the central coordinate of an item.
- * @returns A tuple representing the central coordinate (x, y) of the item.
- */
-export function getLocation(id: string, items): [number, number] {
-  const item = items.find((item) => item.id === id);
-  if (item && item.width && item.height) {
-    return [item.x + item.width / 2, item.y + item.height / 2];
-  } else if (item) {
-    console.error(
-      `getLocation: Item with ID ${id} does not have width or height property.`
-    );
-    return [0, 0];
-  } else {
-    console.error(`getLocation: Item with ID ${id} not found.`);
-    return [0, 0];
-  }
-}
-
-// For purpose of testing only, to be deleted
-export function add(a: number, b: number): number {
-  return a + b;
-}
-
 // helper function for sticky note color
-export function getStickyNoteColor(color:string):string {
+export function getStickyNoteColor(color: string): string {
   for (const item of data) {
     if (item.fillColor === color) {
       return item.color;
@@ -258,4 +260,4 @@ export function getStickyNoteColor(color:string):string {
   }
 }
 
-// todo(hy) may need a helper to handle further clustering shapes by form
+// todo(hy) may need a helper to handle further grouping shapes by form
