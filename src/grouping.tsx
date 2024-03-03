@@ -2,7 +2,7 @@
 
 import { BoardNode } from "@mirohq/websdk-types";
 import { GetColorName } from "hex-color-to-color-name";
-import { kMeansClusteringWrapper,  } from "kMeansClustering";
+import { kMeansClusteringWrapper, } from "kMeansClustering";
 
 import data from "./data/grouping/stickyColor";
 
@@ -13,19 +13,21 @@ const GROUPING_TRHESHOLD = 5;
 let items: BoardNode[];
 
 // Sets to store IDs of items based on their categorization
-let frameSet: Set<string> = new Set();
-let groupSet: Set<string> = new Set();
+// let frameSet: Set<string> = new Set();
+// let groupSet: Set<string> = new Set();
 let floatingSet: Set<string> = new Set();
+let frameMap: Map<string, Set<string>> = new Map();
+let groupMap: Map<string, Set<string>> = new Map();
 
 // Maps and Sets to organize items by their characteristics
 // TODO - zqy: Remove unused containers
-let imageSet: Set<string> = new Set();
-let shapeSet: Set<string> = new Set(); // hold all shapes regardless of form
-let shapeMap: Map<string, Set<string>> = new Map();
-let stickyNoteSet: Set<string> = new Set();
-let cardSet: Set<string> = new Set();
-let textSet: Set<string> = new Set();
-let connectorSet: Set<string> = new Set();
+// let imageSet: Set<string> = new Set();
+// let shapeSet: Set<string> = new Set(); // hold all shapes regardless of form
+// let shapeMap: Map<string, Set<string>> = new Map();
+// let stickyNoteSet: Set<string> = new Set();
+// let cardSet: Set<string> = new Set();
+// let textSet: Set<string> = new Set();
+// let connectorSet: Set<string> = new Set();
 
 /**
  * Groups Miro board items by rule based algorithm.
@@ -75,16 +77,19 @@ export async function groupItems() {
  * Clears all containers to prepare for new summarized action.
  */
 function cleanAllContainers(): void {// TODO: Remove unused containers
+  frameMap.clear();
+  groupMap.clear();
   frameSet.clear();
-  groupSet.clear();
-  floatingSet.clear();
-  imageSet.clear();
-  shapeSet.clear();
-  shapeMap.clear();
-  stickyNoteSet.clear();
-  cardSet.clear();
-  textSet.clear();
-  connectorSet.clear();
+  // frameSet.clear();
+  // groupSet.clear();
+  // floatingSet.clear();
+  // imageSet.clear();
+  // shapeSet.clear();
+  // shapeMap.clear();
+  // stickyNoteSet.clear();
+  // cardSet.clear();
+  // textSet.clear();
+  // connectorSet.clear();
 }
 
 /**
@@ -93,12 +98,30 @@ function cleanAllContainers(): void {// TODO: Remove unused containers
 function allocateToContainers(): void {
   for (const item of items) {
     if (item.type === "frame") {
-      frameSet.add(item.id);
+      const childrenIds = item.childrenIds;
+      frameMap.set(item.id, new Set(childrenIds));
     } else if (item.type === "group") {
-      groupSet.add(item.id);
+      const childrenIds = item.itemsIds;
+      groupMap.set(item.id, new Set(childrenIds));
     } else {
       floatingSet.add(item.id);
-      allocateByTypeHelper(item);
+    }
+  }
+  subtractFrameGroupItems();
+}
+
+/**
+ * Helper function to remove items belonging to a group or frame from the floating set.
+ */
+function subtractFrameGroupItems(): void {
+  for (const children of frameMap.values()) {
+    for (const child of children) {
+      floatingSet.delete(child);
+    }
+  }
+  for (const children of groupMap.values()) {
+    for (const child of children) {
+      floatingSet.delete(child);
     }
   }
 }
