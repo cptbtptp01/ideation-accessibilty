@@ -23,13 +23,13 @@ let groupMap: Map<string, Set<string>> = new Map();
  */
 export async function groupItems() {
   // Fetches all board items
-  items = await miro.board.get(); 
+  items = await miro.board.get();
 
   // Resets all containers for a fresh start
-  cleanAllContainers(); 
+  cleanAllContainers();
 
   // Sorts items into proper containers
-  allocateToContainers(); 
+  allocateToContainers();
 
   // Initializes the array to hold the final clusters
   let jsonObject = {};
@@ -58,26 +58,42 @@ function processAllItems(jsonObject: any) {
  * Process one array/set and update the jsonObject.
 */
 function processCluster(cluster: string[][], parentId: string, jsonObject: any) {
-  const clusters: string[][] = kMeansClusteringWrapper(cluster, items);
-  // TODO: handling connnectors (maybe later)
+  const clusters: string[][] = kMeansClusteringWrapper(cluster, items); // TODO: handling connnectors (maybe later)
   for (const subCluster of clusters) {
     if (subCluster.length > GROUPING_TRHESHOLD) { // bigger clusters...
       const colorGroups = groupByColors(subCluster);
       const typeGroups = groupByTypes(subCluster);
       const result = evaluateClusters(colorGroups, typeGroups);
-      if (jsonObject.hasOwnProperty(parentId)) {
-        jsonObject[parentId].push(...result); // merge with existing value
-      } else {
-        jsonObject[parentId] = result; // assign as new value
-      }
+      pushToJsonObject(result, parentId, jsonObject);
     } else { // smaller clusters...
-      if (jsonObject.hasOwnProperty(parentId)) {
-        jsonObject[parentId].push(subCluster); // merge with existing value
-      } else {
-        jsonObject[parentId] = [subCluster]; // assign as new value
-      }
+      pushToJsonObject(subCluster, parentId, jsonObject);
     }
   }
+}
+
+/**
+ * Pushes the result (not ids, but the actual text) to the jsonObject.
+ */
+function pushToJsonObject(result: string[][], parentId: string, jsonObject: any) {
+  const result = convertIdsToString(result, parentId); // TODO: type tbd
+  if (jsonObject.hasOwnProperty(parentId)) {
+    jsonObject[parentId].push(result); // merge with existing value
+  } else {
+    jsonObject[parentId] = result; // assign as new value
+  }
+}
+
+/**
+ * Convert the IDs to actual text.
+ */
+function convertIdsToString(result: string[][], parentId: string): string[][]{
+  // TODO: implementation to be refined
+  for (let i = 0; i < result.length; i++) {
+    for (let j = 0; j < result[i].length; j++) {
+      result[i][j] = items.find((item) => item.id === result[i][j]).text;
+    }
+  }
+  return result;
 }
 
 /**
