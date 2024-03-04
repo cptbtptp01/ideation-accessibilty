@@ -2,12 +2,12 @@
 
 import { BoardNode } from "@mirohq/websdk-types";
 import { GetColorName } from "hex-color-to-color-name";
-import { kMeansClusteringWrapper, } from "kMeansClustering";
+import { kMeansClusteringWrapper, } from "./kMeansClustering";
 
 import data from "./data/grouping/stickyColor";
 
-const K_MEANS_TRHESHOLD = 5;
-const GROUPING_TRHESHOLD = 5;
+const K_MEANS_THRESHOLD = 5;
+const GROUPING_THRESHOLD = 5;
 const PARENT_ID_FOR_FLOATING = "floating";
 const NO_CONTENT_MSG = "No content available"
 
@@ -58,43 +58,118 @@ function processAllItems(jsonObject: any) {
 /**
  * Process one array/set and update the jsonObject.
 */
-function processCluster(cluster: string[][], parentId: string, jsonObject: any) {
-  const clusters: string[][] = kMeansClusteringWrapper(cluster, items); // TODO: handling connnectors (maybe later)
+function processCluster(rawInputs: string[], parentId: string, jsonObject: any) {
+  const clusters: string[][] = kMeansClusteringWrapper(rawInputs, items); // TODO: handling connectors (maybe later)
   for (const subCluster of clusters) {
-    if (subCluster.length > GROUPING_TRHESHOLD) { // bigger clusters...
-      const colorGroups = groupByColors(subCluster);
-      const typeGroups = groupByTypes(subCluster);
-      const result = evaluateClusters(colorGroups, typeGroups);
-      pushToJsonObject(result, parentId, jsonObject);
-    } else { // smaller clusters...
-      pushToJsonObject(subCluster, parentId, jsonObject);
+    if (subCluster.length > GROUPING_THRESHOLD) { // bigger clusters...
+      let colorGroups = groupByColors(subCluster);
+      let typeGroups = groupByTypes(subCluster);
+      let result = evaluateClusters(colorGroups, typeGroups);
+      let largeClusterJsonObject = {};
+      for (const itemIds in result) {
+        const newObject = createJsonObject(itemIds, parentId); // "content": [json, json, json]
+        // add newObject to largeClusterJsonObject;
+      }
+      // add largeClusterJsonObject to jsonObject
+
+    } else { // smaller clusters... ["id1", "id2",...] -> {"title": "_", "content": ["content1", "content2", ...]}
+      const object = createJsonObject(subCluster, parentId)
+      // const smallClusterId = `smallCluster_${Object.keys(jsonObject[parentId]).length + 1}`;
+      // jsonObject[parentId][smallClusterId] = createJsonObject(subCluster, parentId);
     }
   }
 }
 
 /**
- * Pushes the result (not ids, but the actual text) to the jsonObject.
+ * Generates content in a specified format as an jsonObject.
+ * @example
+ * {
+ *   title: "Cluster Title", // Assuming title is either passed or predefined
+ *   content: ["hello", "world", "miro", ...]
+ * }
  */
-function pushToJsonObject(result: string[][], parentId: string, jsonObject: any) {
-  const result = convertIdsToString(result, parentId); // TODO: type tbd
-  if (jsonObject.hasOwnProperty(parentId)) {
-    jsonObject[parentId].push(result); // merge with existing value
+function createJsonObject(cluster: string[], parentId: string) : jsonObject {
+  // Get contents
+  let contentArray = [];
+  for (const id of cluster) {
+    const content = getContent(id);
+    if (content !== NO_CONTENT_MSG) {
+    contentArray.push(content);}
+  }
+
+  let newTitle = getTitle(parentId);
+
+  // Construct the object to be added
+  const newJsonObject = {
+    title: newTitle,
+    content: contentArray
+  };
+
+  console.error(newJsonObject)
+  return newJsonObject;
+}
+
+function getContent(id: string): string {
+  const item = items.find((item) => item.id === id);
+  if (item && item.content) {
+    return item.content;
   } else {
-    jsonObject[parentId] = result; // assign as new value
+    return NO_CONTENT_MSG;
+  }
+}
+
+function getTitle(parentId: string): string {
+  const item = items.find((item) => item.id === parentId);
+  if (item && item.title) {
+    return item.title;
+  } else {
+    return NO_CONTENT_MSG;
+  }
+}
+
+/**
+ * Pushes the result (not ids, but the actual text) to the jsonObject.
+ * @example
+ * {
+ * title: "title",
+ * content: ["hello", "world", "miro", ...]
+ * }
+ * @example
+ * {
+ * title: "title",
+ *   content: {
+ *     {
+ *      title: "title",
+ *      content: ["hello", "world", "miro", ...]
+ *     },
+ *     {
+ *      title: "title",
+ *      content: content: ["hello", "world", "miro", ...]
+ *     }
+ *   }
+ * }
+ */
+function pushToJsonObject(clusterResult: string[][], parentId: string, jsonObject: any) {
+  const textResult = convertIdsToString(clusterResult, parentId); // Use a different variable name
+  if (jsonObject.hasOwnProperty(parentId)) {
+    jsonObject[parentId].push(...textResult); // Ensure to spread the array if needed
+  } else {
+    jsonObject[parentId] = textResult; // Assign as new value
   }
 }
 
 /**
  * Convert the IDs to actual text.
+ * [["content1", "content2",...], ["content1", "..",...],...]
  */
 function convertIdsToString(result: string[][], parentId: string): string[][] {
   for (let i = 0; i < result.length; i++) {
     for (let j = 0; j < result[i].length; j++) {
-      const item = items.find((item) => item.id === result[i][j]);
-      if (item.content && item.content !== "") {
+      let item = items.find((item) => item.id === result[i][j]);
+      if (item && item.content && item.content !== "") {
         result[i][j] = item.content;
       } else {
-        result[i][j] = NO_TEXT_MESSAGE; // TODO: Better way to handle items with no text?
+        result[i][j] = NO_CONTENT_MSG; // TODO: Better way to handle items with no text?
       }
     }
   }
@@ -107,7 +182,7 @@ function convertIdsToString(result: string[][], parentId: string): string[][] {
 function cleanAllContainers(): void {
   frameMap.clear();
   groupMap.clear();
-  frameSet.clear();
+  floatingSet.clear();
 }
 
 /**
@@ -186,7 +261,7 @@ function groupByColors(cluster: string[]): string[][] {
  *  }
  */
 function groupByTypes(cluster: string[]): Map<string, string[] | string[][]> {
-  const typeMap: Map<string, string[] | string[][]> = new Map();
+  const typeMap: Map<string, string[] | string[][]> = new Map(); // todo predefine the map
   for (const id of cluster) {
     const item = items.find((item) => item.id === id);
     if (item) {
@@ -199,8 +274,8 @@ function groupByTypes(cluster: string[]): Map<string, string[] | string[][]> {
   }
   // get shape group and update the map
   // [id1, id2, id3,...] -> [[id1, id2], [id3, id4], ...]
-  const shapeGroup = getShapeGroup(typeMap.get("shape"));
-  typeMap.set("shape", shapeGroup);
+  // const shapeGroup = getShapeGroup(typeMap.get("shape"));
+  // typeMap.set("shape", shapeGroup);
 
   return typeMap;
 }
@@ -262,6 +337,7 @@ export function getStickyNoteColor(color: string): string {
 
 // helper function to get shape map
 function getShapeGroup(shapes: string[]): string[][] {
+  console.log(shapes);
   const shapeMap: Map<string, string[]> = new Map();
   for (id of shapes) {
     const item = items.find((item) => item.id === id);

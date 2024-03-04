@@ -1,0 +1,75 @@
+
+//case1:
+{
+    "cluster1": {
+        "title": "title",
+        "content": {
+            "cluster_a":{
+                "title": "title",
+                "content": ["hello", "world", "miro"]
+            }
+        }
+    }
+}
+
+
+{
+    "cluster1": {
+        "title": "title",
+        "content": {
+            "cluster_a":{
+                "title": "title",
+                "content": ["hello", "world", "miro"]
+            },
+            "cluster_b":{
+                "title": "title",
+                "content": ["hello", "world", "miro"]
+            }
+        }
+    }
+},
+
+{
+    "cluster1": {
+        "title": "title",
+        "content": {
+            "cluster_a":{
+                "title": "title",
+                "content": ["hello", "world", "miro"]
+            },
+            "cluster_b":{
+                "title": "title",
+                "content": ["hello", "world", "miro"]
+            }
+        }
+    },
+    "cluster2": {
+        "title": "title",
+        "content": ["hello", "there"]
+    }
+}
+
+
+
+
+{
+    "cluster1": {
+        "title": "title",
+        "content": {
+            "cluster_a":{
+                "title": "title",
+                "content": ["hello", "world", "miro"]
+            },
+            "cluster_b":{
+                "title": "title",
+                "content": ["hello", "world", "miro"]
+            }
+        }
+    },
+    "cluster2": {
+        "title": "title",
+        "content": ["hello", "there"]
+    }
+}
+
+
