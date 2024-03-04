@@ -222,33 +222,20 @@ function subtractFrameGroupItems(): void {
  */
 function groupByColors(cluster: string[]): string[][] {
   const colorMap: Map<string, string[]> = new Map();
-
   for (const item of cluster) {
     const color = getColor(item, items);
-
     if (colorMap.has(color)) {
       colorMap.get(color)!.push(item);
     } else {
       colorMap.set(color, [item]);
     }
   }
-
   const colorGroups: string[][] = Array.from(colorMap.values());
-
   return colorGroups;
 }
 
 /**
- * Groups items within a cluster based on their type.
- * @param cluster An array of item IDs as strings.
- * @returns A map of type to a list of item IDs.
- * @example
- *  {
- *  "card": ["id1", "id2", ...],
- *  "rectangle": [["id3", "id4", ...],[...]],
- *  "square": [["id3", "id4", ...],[...]],
- *  ...
- *  }
+ * Groups items within a cluster based on their shape (if available) or type.
  */
 function groupByTypes(cluster: string[]): string[][] {
   const typeMap: Map<string, string[]> = new Map();
