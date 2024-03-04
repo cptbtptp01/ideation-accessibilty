@@ -2,7 +2,7 @@ import { BoardNode } from "@mirohq/websdk-types";
 import * as React from "react";
 
 interface Props {
-  groups: { [key: string]: BoardNode[] };
+  groups: string;
   onUpdateGrouping: () => void;
 }
 
@@ -23,20 +23,8 @@ const GroupingList: React.FC<Props> = ({ groups, onUpdateGrouping }) => {
       >
         Update Overview
       </button>
-      {Object.entries(groups).map(([color, items]) => (
-        <div key={color}>
-          <h2>{color}</h2>
-          <ul>
-            {items.map((item, index) => (
-              <li key={index}>
-                {item.type === "card"
-                  ? `${item.type}: ${item.title}`
-                  : `${item.type}: ${item.content}`}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+      {/* raw json for now to test the grouping out put */}
+      <pre>{groups}</pre>
     </div>
   );
 };
