@@ -72,10 +72,6 @@ function processCluster(
       let typeGroups = groupByTypes(subCluster);
       let result = evaluateClusters(colorGroups, typeGroups);
       const largeClusterJsonObject = processLargeCluster(result, parentId);
-      // Add the res cluster to jsonObject
-      // const curLen = Object.keys(jsonObject).length;
-      // const largeClusterID = `cluster_${curLen + 1}`; // 1, 2, 3, ...
-      // jsonObject[largeClusterID] = largeClusterJsonObject;
       addToResJson(largeClusterJsonObject, jsonObject);
     } else {
       const singleJsonObject = createJsonObject(subCluster, parentId);
@@ -277,15 +273,6 @@ function evaluateClusters(
 ): string[][] {
   // TODO - zqy: Implementation
   // Maybe comparing, combining, or selecting clusters based on the evaluation rules
-
-  // For now, just randomly return one of the groups depends on random number
-  // const random = Math.floor(Math.random() * 2);
-  // if (random === 0) {
-  //   return colorGroups;
-  // } else {
-  //   return typeGroups;
-  // }
-
   return colorGroups;
 }
 
