@@ -91,8 +91,7 @@ function processLargeCluster(subGroups: string[][], parentId: string): Json {
     const singleJsonObject = createJsonObject(groupedItems, parentId);
     if (singleJsonObject && singleJsonObject.content.length > 0) {
       const curLen = Object.keys(largeClusterJsonObject["content"]).length;
-      const curGroupID = `group_${String.fromCharCode(97 + curLen)}`; // a, b, c, ...
-      // add to the content filed, not replacing the existing content filed
+      const curGroupID = `group_${String.fromCharCode(97 + curLen)}`; // group_a, group_b, group_c, ...
       largeClusterJsonObject["content"][curGroupID] = singleJsonObject;
     }
   });
@@ -107,12 +106,12 @@ function addToResJson(newContent: Json, resultJsonObject: Json) {
     return;
   }
   const curLen = Object.keys(resultJsonObject).length;
-  const curClusterId = `cluster_${curLen + 1}`; // 1, 2, 3, ...
+  const curClusterId = `cluster_${curLen + 1}`; // cluster_1, cluster_2, cluster_3, ...
   resultJsonObject[curClusterId] = newContent;
 }
 
 /**
- * Generates content in a specified format as an jsonObject.
+ * Generates content in a specified format as an jsonObject. If the cluster has no content, return null.
  */
 function createJsonObject(cluster: string[], parentId: string): jsonObject {
   // Get contents
@@ -126,7 +125,6 @@ function createJsonObject(cluster: string[], parentId: string): jsonObject {
   if (contentArray.length === 0) {
     return null;
   }
-
   let newTitle = getTitle(parentId);
   const newJsonObject = {
     title: newTitle,
