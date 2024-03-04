@@ -1,6 +1,6 @@
 //@ts-nocheck
 
-import { BoardNode } from "@mirohq/websdk-types";
+import { BoardNode, Json } from "@mirohq/websdk-types";
 import { GetColorName } from "hex-color-to-color-name";
 import { kMeansClusteringWrapper } from "./kMeansClustering";
 
@@ -67,35 +67,56 @@ function processCluster(
   const clusters: string[][] = kMeansClusteringWrapper(rawInputs, items); // TODO: handling connectors (maybe later)
   for (const subCluster of clusters) {
     if (subCluster.length > GROUPING_THRESHOLD) {
-      // bigger clusters...
+      // Further group by color or type
       let colorGroups = groupByColors(subCluster);
       let typeGroups = groupByTypes(subCluster);
       let result = evaluateClusters(colorGroups, typeGroups);
-
-      let largeClusterJsonObject = {};
-      result.forEach((cluster, idx) => {
-        const clusterID = `cluster_${String.fromCharCode(97 + idx)}`; // a, b, c, ...
-        largeClusterJsonObject[clusterID] = createJsonObject(cluster, parentId);
-      });
-
-      const curLen = Object.keys(jsonObject).length;
-      const largeClusterID = `cluster_${curLen + 1}`; // 1, 2, 3, ...
-      jsonObject[largeClusterID] = largeClusterJsonObject;
+      const largeClusterJsonObject = processLargeCluster(result, parentId);
+      // Add the res cluster to jsonObject
+      // const curLen = Object.keys(jsonObject).length;
+      // const largeClusterID = `cluster_${curLen + 1}`; // 1, 2, 3, ...
+      // jsonObject[largeClusterID] = largeClusterJsonObject;
+      addToResJson(largeClusterJsonObject, jsonObject);
     } else {
-      const curLen = Object.keys(jsonObject).length;
-      const curClusterId = `cluster_${curLen + 1}`;
-      jsonObject[curClusterId] = createJsonObject(subCluster, parentId);
+      const singleJsonObject = createJsonObject(subCluster, parentId);
+      addToResJson(singleJsonObject, jsonObject);
     }
   }
 }
 
 /**
+ * Process large cluster (further grouping by color or type) and return a json of json object.
+ */
+function processLargeCluster(subGroups: string[][], parentId: string): Json {
+  let largeClusterJsonObject = {};
+  largeClusterJsonObject["title"] = NO_TITLE_MSG;
+  largeClusterJsonObject["content"] = {};
+  subGroups.forEach((groupedItems, idx) => {
+    const singleJsonObject = createJsonObject(groupedItems, parentId);
+    if (singleJsonObject && singleJsonObject.content.length > 0) {
+      const curLen = Object.keys(largeClusterJsonObject["content"]).length;
+      const curGroupID = `group_${String.fromCharCode(97 + curLen)}`; // a, b, c, ...
+      // add to the content filed, not replacing the existing content filed
+      largeClusterJsonObject["content"][curGroupID] = singleJsonObject;
+    }
+  });
+  return largeClusterJsonObject;
+}
+
+/**
+ * Add new generated jsonObject to the resultJsonObject.
+ */
+function addToResJson(newContent: Json, resultJsonObject: Json) {
+  if (!newContent) {
+    return;
+  }
+  const curLen = Object.keys(resultJsonObject).length;
+  const curClusterId = `cluster_${curLen + 1}`; // 1, 2, 3, ...
+  resultJsonObject[curClusterId] = newContent;
+}
+
+/**
  * Generates content in a specified format as an jsonObject.
- * @example
- * {
- *   title: "Cluster Title", // Assuming title is either passed or predefined
- *   content: ["hello", "world", "miro", ...]
- * }
  */
 function createJsonObject(cluster: string[], parentId: string): jsonObject {
   // Get contents
@@ -106,19 +127,21 @@ function createJsonObject(cluster: string[], parentId: string): jsonObject {
       contentArray.push(content);
     }
   }
+  if (contentArray.length === 0) {
+    return null;
+  }
 
   let newTitle = getTitle(parentId);
-
-  // Construct the object to be added
   const newJsonObject = {
     title: newTitle,
     content: contentArray
   };
-
-  console.error(newJsonObject);
   return newJsonObject;
 }
 
+/**
+ * Get content of an item by its ID. If the item has no content, return a default message.
+ */
 function getContent(id: string): string {
   const item = items.find((item) => item.id === id);
   if (item && item.content) {
@@ -128,6 +151,9 @@ function getContent(id: string): string {
   }
 }
 
+/**
+ * Get title of an item by its parent ID. If the item has no title, return a default message.
+ */
 function getTitle(parentId: string): string {
   const item = items.find((item) => item.id === parentId);
   if (item && item.title) {
@@ -135,59 +161,6 @@ function getTitle(parentId: string): string {
   } else {
     return NO_TITLE_MSG;
   }
-}
-
-/**
- * Pushes the result (not ids, but the actual text) to the jsonObject.
- * @example
- * {
- * title: "title",
- * content: ["hello", "world", "miro", ...]
- * }
- * @example
- * {
- * title: "title",
- *   content: {
- *     {
- *      title: "title",
- *      content: ["hello", "world", "miro", ...]
- *     },
- *     {
- *      title: "title",
- *      content: content: ["hello", "world", "miro", ...]
- *     }
- *   }
- * }
- */
-// function pushToJsonObject(
-//   clusterResult: string[][],
-//   parentId: string,
-//   jsonObject: any
-// ) {
-//   const textResult = convertIdsToString(clusterResult, parentId); // Use a different variable name
-//   if (jsonObject.hasOwnProperty(parentId)) {
-//     jsonObject[parentId].push(...textResult); // Ensure to spread the array if needed
-//   } else {
-//     jsonObject[parentId] = textResult; // Assign as new value
-//   }
-// }
-
-/**
- * Convert the IDs to actual text.
- * [["content1", "content2",...], ["content1", "..",...],...]
- */
-function convertIdsToString(result: string[][], parentId: string): string[][] {
-  for (let i = 0; i < result.length; i++) {
-    for (let j = 0; j < result[i].length; j++) {
-      let item = items.find((item) => item.id === result[i][j]);
-      if (item && item.content && item.content !== "") {
-        result[i][j] = item.content;
-      } else {
-        result[i][j] = NO_CONTENT_MSG; // TODO: Better way to handle items with no text?
-      }
-    }
-  }
-  return result;
 }
 
 /**
@@ -312,6 +285,7 @@ function evaluateClusters(
   // } else {
   //   return typeGroups;
   // }
+
   return colorGroups;
 }
 
