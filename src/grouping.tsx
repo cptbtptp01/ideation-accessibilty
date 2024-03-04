@@ -2,14 +2,15 @@
 
 import { BoardNode } from "@mirohq/websdk-types";
 import { GetColorName } from "hex-color-to-color-name";
-import { kMeansClusteringWrapper, } from "./kMeansClustering";
+import { kMeansClusteringWrapper } from "./kMeansClustering";
 
 import data from "./data/grouping/stickyColor";
 
 const K_MEANS_THRESHOLD = 5;
 const GROUPING_THRESHOLD = 5;
 const PARENT_ID_FOR_FLOATING = "floating";
-const NO_CONTENT_MSG = "No content available"
+const NO_CONTENT_MSG = "No content available.";
+const NO_TITLE_MSG = "No Title";
 
 // Global variable to make Miro items accessible throughout the file
 let items: BoardNode[]; // TODO: Consider to use map
@@ -57,25 +58,33 @@ function processAllItems(jsonObject: any) {
 
 /**
  * Process one array/set and update the jsonObject.
-*/
-function processCluster(rawInputs: string[], parentId: string, jsonObject: any) {
+ */
+function processCluster(
+  rawInputs: string[],
+  parentId: string,
+  jsonObject: any
+) {
   const clusters: string[][] = kMeansClusteringWrapper(rawInputs, items); // TODO: handling connectors (maybe later)
   for (const subCluster of clusters) {
-    if (subCluster.length > GROUPING_THRESHOLD) { // bigger clusters...
+    if (subCluster.length > GROUPING_THRESHOLD) {
+      // bigger clusters...
       let colorGroups = groupByColors(subCluster);
       let typeGroups = groupByTypes(subCluster);
       let result = evaluateClusters(colorGroups, typeGroups);
-      let largeClusterJsonObject = {};
-      for (const itemIds in result) {
-        const newObject = createJsonObject(itemIds, parentId); // "content": [json, json, json]
-        // add newObject to largeClusterJsonObject;
-      }
-      // add largeClusterJsonObject to jsonObject
 
-    } else { // smaller clusters... ["id1", "id2",...] -> {"title": "_", "content": ["content1", "content2", ...]}
-      const object = createJsonObject(subCluster, parentId)
-      // const smallClusterId = `smallCluster_${Object.keys(jsonObject[parentId]).length + 1}`;
-      // jsonObject[parentId][smallClusterId] = createJsonObject(subCluster, parentId);
+      let largeClusterJsonObject = {};
+      result.forEach((cluster, idx) => {
+        const clusterID = `cluster_${String.fromCharCode(97 + idx)}`; // a, b, c, ...
+        largeClusterJsonObject[clusterID] = createJsonObject(cluster, parentId);
+      });
+
+      const curLen = Object.keys(jsonObject).length;
+      const largeClusterID = `cluster_${curLen + 1}`; // 1, 2, 3, ...
+      jsonObject[largeClusterID] = largeClusterJsonObject;
+    } else {
+      const curLen = Object.keys(jsonObject).length;
+      const curClusterId = `cluster_${curLen + 1}`;
+      jsonObject[curClusterId] = createJsonObject(subCluster, parentId);
     }
   }
 }
@@ -88,13 +97,14 @@ function processCluster(rawInputs: string[], parentId: string, jsonObject: any) 
  *   content: ["hello", "world", "miro", ...]
  * }
  */
-function createJsonObject(cluster: string[], parentId: string) : jsonObject {
+function createJsonObject(cluster: string[], parentId: string): jsonObject {
   // Get contents
   let contentArray = [];
   for (const id of cluster) {
     const content = getContent(id);
     if (content !== NO_CONTENT_MSG) {
-    contentArray.push(content);}
+      contentArray.push(content);
+    }
   }
 
   let newTitle = getTitle(parentId);
@@ -105,7 +115,7 @@ function createJsonObject(cluster: string[], parentId: string) : jsonObject {
     content: contentArray
   };
 
-  console.error(newJsonObject)
+  console.error(newJsonObject);
   return newJsonObject;
 }
 
@@ -123,7 +133,7 @@ function getTitle(parentId: string): string {
   if (item && item.title) {
     return item.title;
   } else {
-    return NO_CONTENT_MSG;
+    return NO_TITLE_MSG;
   }
 }
 
@@ -149,14 +159,18 @@ function getTitle(parentId: string): string {
  *   }
  * }
  */
-function pushToJsonObject(clusterResult: string[][], parentId: string, jsonObject: any) {
-  const textResult = convertIdsToString(clusterResult, parentId); // Use a different variable name
-  if (jsonObject.hasOwnProperty(parentId)) {
-    jsonObject[parentId].push(...textResult); // Ensure to spread the array if needed
-  } else {
-    jsonObject[parentId] = textResult; // Assign as new value
-  }
-}
+// function pushToJsonObject(
+//   clusterResult: string[][],
+//   parentId: string,
+//   jsonObject: any
+// ) {
+//   const textResult = convertIdsToString(clusterResult, parentId); // Use a different variable name
+//   if (jsonObject.hasOwnProperty(parentId)) {
+//     jsonObject[parentId].push(...textResult); // Ensure to spread the array if needed
+//   } else {
+//     jsonObject[parentId] = textResult; // Assign as new value
+//   }
+// }
 
 /**
  * Convert the IDs to actual text.
@@ -290,14 +304,15 @@ function evaluateClusters(
 ): string[][] {
   // TODO - zqy: Implementation
   // Maybe comparing, combining, or selecting clusters based on the evaluation rules
+
   // For now, just randomly return one of the groups depends on random number
-  // get random number of either 0 or 1
-  const random = Math.floor(Math.random() * 2);
-  if (random === 0) {
-    return colorGroups;
-  } else {
-    return typeGroups;
-  }
+  // const random = Math.floor(Math.random() * 2);
+  // if (random === 0) {
+  //   return colorGroups;
+  // } else {
+  //   return typeGroups;
+  // }
+  return colorGroups;
 }
 
 /**
