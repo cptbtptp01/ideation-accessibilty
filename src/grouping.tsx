@@ -5,6 +5,7 @@ import { GetColorName } from "hex-color-to-color-name";
 import { kMeansClusteringWrapper } from "./kMeansClustering";
 
 import data from "./data/grouping/stickyColor";
+import { createTitle } from "./ai";
 
 const K_MEANS_THRESHOLD = 5;
 const GROUPING_THRESHOLD = 5;
@@ -126,6 +127,8 @@ function createJsonObject(cluster: string[], parentId: string): jsonObject {
     return null;
   }
   let newTitle = getTitle(parentId);
+  newTitle = createTitle(contentArray);
+  
   const newJsonObject = {
     title: newTitle,
     content: contentArray
