@@ -8,7 +8,7 @@ const ESTIMATED_NODES_PER_CLUSTER = 3;
 
 const TRHESHOLD_FOR_APPLYING_K_MEANS = 8;
 const DEFAULT_ONE_CLUSTER = 1;
-const MAX_MSD_FOR_TWO_CLUSTER = 13000000000; // TODO (zqy): to be determined
+const MAX_MSD_FOR_TWO_CLUSTER = 7000000; // TODO (zqy): to be determined
 
 export interface DataPoint {
   // only used locally in kMeansClustering

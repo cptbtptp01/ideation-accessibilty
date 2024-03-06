@@ -66,9 +66,11 @@ function processCluster(
 ) {
   const clusters: string[][] = kMeansClusteringWrapper(rawInputs, items); // TODO: handling connectors (maybe later)
   for (const subCluster of clusters) {
+    console.error(subCluster);
     if (subCluster.length > GROUPING_THRESHOLD) {
       // Further group by color or type
       let colorGroups = groupByColors(subCluster);
+      console.error(colorGroups);
       let typeGroups = groupByTypes(subCluster);
       let result = evaluateClusters(colorGroups, typeGroups);
       const largeClusterJsonObject = processLargeCluster(result, parentId);
@@ -84,11 +86,14 @@ function processCluster(
  * Process large cluster (further grouping by color or type) and return a json of json object.
  */
 function processLargeCluster(subGroups: string[][], parentId: string): Json {
+  console.error(`Processing large cluster with ${subGroups.length} subgroups.`);
+  console.error(subGroups);
   let largeClusterJsonObject = {};
   largeClusterJsonObject["title"] = NO_TITLE_MSG;
   largeClusterJsonObject["content"] = {};
   subGroups.forEach((groupedItems, idx) => {
     const singleJsonObject = createJsonObject(groupedItems, parentId);
+    console.error(singleJsonObject);
     if (singleJsonObject && singleJsonObject.content.length > 0) {
       const curLen = Object.keys(largeClusterJsonObject["content"]).length;
       const curGroupID = `group_${String.fromCharCode(97 + curLen)}`; // group_a, group_b, group_c, ...
@@ -214,51 +219,39 @@ function subtractFrameGroupItems(): void {
  */
 function groupByColors(cluster: string[]): string[][] {
   const colorMap: Map<string, string[]> = new Map();
-
   for (const item of cluster) {
     const color = getColor(item, items);
-
     if (colorMap.has(color)) {
       colorMap.get(color)!.push(item);
     } else {
       colorMap.set(color, [item]);
     }
   }
-
   const colorGroups: string[][] = Array.from(colorMap.values());
-
   return colorGroups;
 }
 
 /**
- * Groups items within a cluster based on their type.
- * @param cluster An array of item IDs as strings.
- * @returns A map of type to a list of item IDs.
- * @example
- *  {
- *  "card": ["id1", "id2", ...],
- *  "shape": [["id3", "id4", ...],[...]],
- *  ...
- *  }
+ * Groups items within a cluster based on their shape (if available) or type.
  */
-function groupByTypes(cluster: string[]): Map<string, string[] | string[][]> {
-  const typeMap: Map<string, string[] | string[][]> = new Map(); // todo predefine the map
+function groupByTypes(cluster: string[]): string[][] {
+  const typeMap: Map<string, string[]> = new Map();
   for (const id of cluster) {
     const item = items.find((item) => item.id === id);
     if (item) {
-      if (item.type in typeMap) {
-        typeMap.get(item.type)?.push(id);
-      } else {
-        typeMap.set(item.type, [id]);
+      let key = item.type;
+      if (item.shape) {
+        key = item.shape;
       }
+      if (!typeMap.has(key)) {
+        typeMap.set(key, []);
+      }
+      typeMap.get(key)!.push(id);
     }
   }
-  // get shape group and update the map
-  // [id1, id2, id3,...] -> [[id1, id2], [id3, id4], ...]
-  // const shapeGroup = getShapeGroup(typeMap.get("shape"));
-  // typeMap.set("shape", shapeGroup);
-
-  return typeMap;
+  console.log(typeMap);
+  console.log(Array.from(typeMap.values()));
+  return Array.from(typeMap.values());
 }
 
 /**
@@ -271,7 +264,7 @@ function evaluateClusters(
 ): string[][] {
   // TODO - zqy: Implementation
   // Maybe comparing, combining, or selecting clusters based on the evaluation rules
-  return colorGroups;
+  return typeGroups;
 }
 
 /**
