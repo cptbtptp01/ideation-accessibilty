@@ -5,6 +5,7 @@ import { GetColorName } from "hex-color-to-color-name";
 import { kMeansClusteringWrapper } from "./kMeansClustering";
 
 import data from "./data/grouping/stickyColor";
+import { createTitle } from "./ai";
 
 const K_MEANS_THRESHOLD = 5;
 const GROUPING_THRESHOLD = 5;
@@ -93,7 +94,6 @@ function processLargeCluster(subGroups: string[][], parentId: string): Json {
   largeClusterJsonObject["content"] = {};
   subGroups.forEach((groupedItems, idx) => {
     const singleJsonObject = createJsonObject(groupedItems, parentId);
-    console.error(singleJsonObject);
     if (singleJsonObject && singleJsonObject.content.length > 0) {
       const curLen = Object.keys(largeClusterJsonObject["content"]).length;
       const curGroupID = `group_${String.fromCharCode(97 + curLen)}`; // group_a, group_b, group_c, ...
@@ -118,7 +118,7 @@ function addToResJson(newContent: Json, resultJsonObject: Json) {
 /**
  * Generates content in a specified format as an jsonObject. If the cluster has no content, return null.
  */
-function createJsonObject(cluster: string[], parentId: string): jsonObject {
+async function createJsonObject(cluster: string[], parentId: string): jsonObject {
   // Get contents
   let contentArray = [];
   for (const id of cluster) {
@@ -131,6 +131,7 @@ function createJsonObject(cluster: string[], parentId: string): jsonObject {
     return null;
   }
   let newTitle = getTitle(parentId);
+  newTitle = createTitle(contentArray);
   const newJsonObject = {
     title: newTitle,
     content: contentArray
