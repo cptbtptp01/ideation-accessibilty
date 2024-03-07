@@ -1,6 +1,5 @@
 //@ts-nocheck
 import { BoardNode } from "@mirohq/websdk-types";
-import { items } from "./grouping";
 
 const MAX_ITERATIONS = 5;
 const REPEATING_TIMES_PER_K = 5;

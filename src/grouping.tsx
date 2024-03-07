@@ -1,5 +1,4 @@
 //@ts-nocheck
-
 import { BoardNode, Json } from "@mirohq/websdk-types";
 import { GetColorName } from "hex-color-to-color-name";
 import { kMeansClusteringWrapper } from "./kMeansClustering";
@@ -66,11 +65,9 @@ function processCluster(
 ) {
   const clusters: string[][] = kMeansClusteringWrapper(rawInputs, items); // TODO: handling connectors (maybe later)
   for (const subCluster of clusters) {
-    console.error(subCluster);
     if (subCluster.length > GROUPING_THRESHOLD) {
       // Further group by color or type
       let colorGroups = groupByColors(subCluster);
-      console.error(colorGroups);
       let typeGroups = groupByTypes(subCluster);
       let result = evaluateClusters(colorGroups, typeGroups);
       const largeClusterJsonObject = processLargeCluster(result, parentId);
@@ -86,14 +83,14 @@ function processCluster(
  * Process large cluster (further grouping by color or type) and return a json of json object.
  */
 function processLargeCluster(subGroups: string[][], parentId: string): Json {
-  console.error(`Processing large cluster with ${subGroups.length} subgroups.`);
-  console.error(subGroups);
+  // console.error(`Processing large cluster with ${subGroups.length} subgroups.`);
+  // console.error(subGroups);
   let largeClusterJsonObject = {};
   largeClusterJsonObject["title"] = NO_TITLE_MSG;
   largeClusterJsonObject["content"] = {};
   subGroups.forEach((groupedItems, idx) => {
     const singleJsonObject = createJsonObject(groupedItems, parentId);
-    console.error(singleJsonObject);
+    // console.error(singleJsonObject);
     if (singleJsonObject && singleJsonObject.content.length > 0) {
       const curLen = Object.keys(largeClusterJsonObject["content"]).length;
       const curGroupID = `group_${String.fromCharCode(97 + curLen)}`; // group_a, group_b, group_c, ...
@@ -249,21 +246,26 @@ function groupByTypes(cluster: string[]): string[][] {
       typeMap.get(key)!.push(id);
     }
   }
-  console.log(typeMap);
-  console.log(Array.from(typeMap.values()));
+  // console.log(typeMap);
+  // console.log(Array.from(typeMap.values()));
   return Array.from(typeMap.values());
 }
 
 /**
- * Evaluates clusters based on some rule (TBD), returning the most relevant clusters.
+ * Evaluates clusters based on some rule, returning the most relevant clusters.
  * @returns The most relevant clusters after evaluation and possible merging.
  */
 function evaluateClusters(
   colorGroups: string[][],
   typeGroups: string[][]
 ): string[][] {
-  // TODO - zqy: Implementation
-  // Maybe comparing, combining, or selecting clusters based on the evaluation rules
+  // colorDistortion = calculateDistortion(colorGroups);
+  // typeDistortion = calculateDistortion(typeGroups);
+  // if (colorDistortion <= typeDistortion) {
+  //   return colorGroups;
+  // } else {
+  //   return typeGroups;
+  // }
   return typeGroups;
 }
 
