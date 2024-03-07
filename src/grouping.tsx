@@ -1,12 +1,10 @@
 //@ts-nocheck
-
 import { BoardNode, Json } from "@mirohq/websdk-types";
 import { GetColorName } from "hex-color-to-color-name";
 import { kMeansClusteringWrapper } from "./kMeansClustering";
 
 import data from "./data/grouping/stickyColor";
 
-const K_MEANS_THRESHOLD = 5;
 const GROUPING_THRESHOLD = 5;
 const PARENT_ID_FOR_FLOATING = "floating";
 const NO_CONTENT_MSG = "No content available.";
@@ -17,6 +15,7 @@ let items: BoardNode[]; // TODO: Consider to use map
 
 // Sets to store IDs of items based on their categorization
 let floatingSet: Set<string> = new Set();
+let connectorSet: Set<string> = new Set(); // TODO: To be used later
 let frameMap: Map<string, Set<string>> = new Map();
 let groupMap: Map<string, Set<string>> = new Map();
 
@@ -50,9 +49,10 @@ function processAllItems(jsonObject: any) {
   for (const [parentId, cluster] of frameMap) {
     processCluster(Array.from(cluster), parentId, jsonObject);
   }
-  for (const [parentId, cluster] of groupMap) {
-    processCluster(Array.from(cluster), parentId, jsonObject);
-  }
+  // Looks like "group" is for "frame"? Need to confirm
+  // for (const [parentId, cluster] of groupMap) {
+  //   processCluster(Array.from(cluster), parentId, jsonObject);
+  // }
   processCluster(Array.from(floatingSet), PARENT_ID_FOR_FLOATING, jsonObject);
 }
 
@@ -65,12 +65,11 @@ function processCluster(
   jsonObject: any
 ) {
   const clusters: string[][] = kMeansClusteringWrapper(rawInputs, items); // TODO: handling connectors (maybe later)
+
   for (const subCluster of clusters) {
-    console.error(subCluster);
     if (subCluster.length > GROUPING_THRESHOLD) {
       // Further group by color or type
       let colorGroups = groupByColors(subCluster);
-      console.error(colorGroups);
       let typeGroups = groupByTypes(subCluster);
       let result = evaluateClusters(colorGroups, typeGroups);
       const largeClusterJsonObject = processLargeCluster(result, parentId);
@@ -86,14 +85,11 @@ function processCluster(
  * Process large cluster (further grouping by color or type) and return a json of json object.
  */
 function processLargeCluster(subGroups: string[][], parentId: string): Json {
-  console.error(`Processing large cluster with ${subGroups.length} subgroups.`);
-  console.error(subGroups);
   let largeClusterJsonObject = {};
   largeClusterJsonObject["title"] = NO_TITLE_MSG;
   largeClusterJsonObject["content"] = {};
   subGroups.forEach((groupedItems, idx) => {
     const singleJsonObject = createJsonObject(groupedItems, parentId);
-    console.error(singleJsonObject);
     if (singleJsonObject && singleJsonObject.content.length > 0) {
       const curLen = Object.keys(largeClusterJsonObject["content"]).length;
       const curGroupID = `group_${String.fromCharCode(97 + curLen)}`; // group_a, group_b, group_c, ...
@@ -169,6 +165,7 @@ function cleanAllContainers(): void {
   frameMap.clear();
   groupMap.clear();
   floatingSet.clear();
+  connectorSet.clear();
 }
 
 /**
@@ -189,6 +186,8 @@ function allocateToContainers(): void {
     } else if (item.type === "group") {
       const childrenIds = item.itemsIds;
       groupMap.set(item.id, new Set(childrenIds));
+    } else if (item.type === "connector") {
+      connectorSet.add(item.id);
     } else {
       floatingSet.add(item.id);
     }
@@ -249,22 +248,48 @@ function groupByTypes(cluster: string[]): string[][] {
       typeMap.get(key)!.push(id);
     }
   }
-  console.log(typeMap);
-  console.log(Array.from(typeMap.values()));
   return Array.from(typeMap.values());
 }
 
 /**
- * Evaluates clusters based on some rule (TBD), returning the most relevant clusters.
+ * Evaluates clusters based on some rule like the evenness of distribution, returning the most relevant clusters.
+ * @example
+ * color = [1, 1, 1, 3] ==> four colors, each color has 1, 1, 1, 3 items respectively
+ * shape = [3, 3]  ==> two shapes, each shape has 3, 3, items respectively
+ * the shape groupping result is more relevant
+ * @example
+ * color = [1, 1, 1, 6] ==> four colors, each color has 1, 1, 1, 6 items respectively
+ * shape = [3, 3, 2, 1]  ==> four shapes, each shape has 3, 3, 3, 1 items respectively
+ * the shape groupping result is more relevant
  * @returns The most relevant clusters after evaluation and possible merging.
  */
 function evaluateClusters(
   colorGroups: string[][],
   typeGroups: string[][]
 ): string[][] {
-  // TODO - zqy: Implementation
-  // Maybe comparing, combining, or selecting clusters based on the evaluation rules
-  return typeGroups;
+  const colorGroupScore = calculateBalanceScore(colorGroups);
+  const typeGroupScore = calculateBalanceScore(typeGroups);
+  if (colorGroupScore <= typeGroupScore) {
+    return colorGroups;
+  } else {
+    return typeGroups;
+  }
+}
+
+/**
+ * Evaluate the evenness of distribution by considering the variance of subgroup counts.
+ */
+function calculateBalanceScore(group: string[][]): number {
+  let totalItems = 0;
+  for (const subGroup of group) {
+    totalItems += subGroup.length;
+  }
+  const idealSubgroupSize = totalItems / group.length;
+  let squaredDiffs = 0;
+  for (const subGroup of group) {
+    squaredDiffs += (subGroup.length - idealSubgroupSize) ** 2;
+  }
+  return squaredDiffs / group.length;
 }
 
 /**
@@ -303,16 +328,15 @@ export function getStickyNoteColor(color: string): string {
 }
 
 // helper function to get shape map
-function getShapeGroup(shapes: string[]): string[][] {
-  console.log(shapes);
-  const shapeMap: Map<string, string[]> = new Map();
-  for (id of shapes) {
-    const item = items.find((item) => item.id === id);
-    if (item.shape in shapeMap) {
-      shapeMap.get(item.shape)?.push(id);
-    } else {
-      shapeMap.set(item.shape, [id]);
-    }
-  }
-  return Array.from(shapeMap.values());
-}
+// function getShapeGroup(shapes: string[]): string[][] {
+//   const shapeMap: Map<string, string[]> = new Map();
+//   for (id of shapes) {
+//     const item = items.find((item) => item.id === id);
+//     if (item.shape in shapeMap) {
+//       shapeMap.get(item.shape)?.push(id);
+//     } else {
+//       shapeMap.set(item.shape, [id]);
+//     }
+//   }
+//   return Array.from(shapeMap.values());
+// }
