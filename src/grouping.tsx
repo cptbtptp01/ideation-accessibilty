@@ -251,22 +251,44 @@ function groupByTypes(cluster: string[]): string[][] {
 }
 
 /**
- * Evaluates clusters based on some rule, returning the most relevant clusters.
+ * Evaluates clusters based on some rule like the evenness of distribution, returning the most relevant clusters.
+ * @example
+ * color = [1, 1, 1, 3] ==> four colors, each color has 1, 1, 1, 3 items respectively
+ * shape = [3, 3]  ==> two shapes, each shape has 3, 3, items respectively
+ * the shape groupping result is more relevant
+ * @example
+ * color = [1, 1, 1, 6] ==> four colors, each color has 1, 1, 1, 6 items respectively
+ * shape = [3, 3, 2, 1]  ==> four shapes, each shape has 3, 3, 3, 1 items respectively
+ * the shape groupping result is more relevant
  * @returns The most relevant clusters after evaluation and possible merging.
  */
 function evaluateClusters(
   colorGroups: string[][],
   typeGroups: string[][]
 ): string[][] {
-  // colorDistortion = calculateDistortion(colorGroups);
-  // typeDistortion = calculateDistortion(typeGroups);
-  // if (colorDistortion <= typeDistortion) {
-  //   return colorGroups;
-  // } else {
-  //   return typeGroups;
-  // }
+  const colorGroupScore = calculateBalanceScore(colorGroups);
+  const typeGroupScore = calculateBalanceScore(typeGroups);
+  if (colorGroupScore <= typeGroupScore) {
+    return colorGroups;
+  } else {
+    return typeGroups;
+  }
+}
 
-  return typeGroups;
+/**
+ * Evaluate the evenness of distribution by considering the variance of counts.
+ */
+function calculateBalanceScore(group: string[][]): number {
+  let totalItems = 0;
+  for (const subGroup of group) {
+    totalItems += subGroup.length;
+  }
+  const idealSubgroupSize = totalItems / group.length;
+  let squaredDiffs = 0;
+  for (const subGroup of group) {
+    squaredDiffs += (subGroup.length - idealSubgroupSize) ** 2;
+  }
+  return squaredDiffs / group.length;
 }
 
 /**
