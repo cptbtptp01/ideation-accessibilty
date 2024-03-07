@@ -5,7 +5,6 @@ import { kMeansClusteringWrapper } from "./kMeansClustering";
 
 import data from "./data/grouping/stickyColor";
 
-const K_MEANS_THRESHOLD = 5;
 const GROUPING_THRESHOLD = 5;
 const PARENT_ID_FOR_FLOATING = "floating";
 const NO_CONTENT_MSG = "No content available.";
@@ -16,7 +15,7 @@ let items: BoardNode[]; // TODO: Consider to use map
 
 // Sets to store IDs of items based on their categorization
 let floatingSet: Set<string> = new Set();
-let connectorSet: Set<string> = new Set();
+let connectorSet: Set<string> = new Set(); // TODO: To be used later
 let frameMap: Map<string, Set<string>> = new Map();
 let groupMap: Map<string, Set<string>> = new Map();
 
@@ -50,9 +49,10 @@ function processAllItems(jsonObject: any) {
   for (const [parentId, cluster] of frameMap) {
     processCluster(Array.from(cluster), parentId, jsonObject);
   }
-  for (const [parentId, cluster] of groupMap) {
-    processCluster(Array.from(cluster), parentId, jsonObject);
-  }
+  // Looks like "group" is for "frame"? Need to confirm
+  // for (const [parentId, cluster] of groupMap) {
+  //   processCluster(Array.from(cluster), parentId, jsonObject);
+  // }
   processCluster(Array.from(floatingSet), PARENT_ID_FOR_FLOATING, jsonObject);
 }
 
@@ -65,6 +65,7 @@ function processCluster(
   jsonObject: any
 ) {
   const clusters: string[][] = kMeansClusteringWrapper(rawInputs, items); // TODO: handling connectors (maybe later)
+
   for (const subCluster of clusters) {
     if (subCluster.length > GROUPING_THRESHOLD) {
       // Further group by color or type
@@ -276,7 +277,7 @@ function evaluateClusters(
 }
 
 /**
- * Evaluate the evenness of distribution by considering the variance of counts.
+ * Evaluate the evenness of distribution by considering the variance of subgroup counts.
  */
 function calculateBalanceScore(group: string[][]): number {
   let totalItems = 0;
@@ -328,7 +329,6 @@ export function getStickyNoteColor(color: string): string {
 
 // helper function to get shape map
 // function getShapeGroup(shapes: string[]): string[][] {
-//   console.log(shapes);
 //   const shapeMap: Map<string, string[]> = new Map();
 //   for (id of shapes) {
 //     const item = items.find((item) => item.id === id);
