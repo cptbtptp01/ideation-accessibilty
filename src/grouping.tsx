@@ -16,6 +16,7 @@ let items: BoardNode[]; // TODO: Consider to use map
 
 // Sets to store IDs of items based on their categorization
 let floatingSet: Set<string> = new Set();
+let connectorSet: Set<string> = new Set();
 let frameMap: Map<string, Set<string>> = new Map();
 let groupMap: Map<string, Set<string>> = new Map();
 
@@ -83,14 +84,11 @@ function processCluster(
  * Process large cluster (further grouping by color or type) and return a json of json object.
  */
 function processLargeCluster(subGroups: string[][], parentId: string): Json {
-  // console.error(`Processing large cluster with ${subGroups.length} subgroups.`);
-  // console.error(subGroups);
   let largeClusterJsonObject = {};
   largeClusterJsonObject["title"] = NO_TITLE_MSG;
   largeClusterJsonObject["content"] = {};
   subGroups.forEach((groupedItems, idx) => {
     const singleJsonObject = createJsonObject(groupedItems, parentId);
-    // console.error(singleJsonObject);
     if (singleJsonObject && singleJsonObject.content.length > 0) {
       const curLen = Object.keys(largeClusterJsonObject["content"]).length;
       const curGroupID = `group_${String.fromCharCode(97 + curLen)}`; // group_a, group_b, group_c, ...
@@ -166,6 +164,7 @@ function cleanAllContainers(): void {
   frameMap.clear();
   groupMap.clear();
   floatingSet.clear();
+  connectorSet.clear();
 }
 
 /**
@@ -186,6 +185,8 @@ function allocateToContainers(): void {
     } else if (item.type === "group") {
       const childrenIds = item.itemsIds;
       groupMap.set(item.id, new Set(childrenIds));
+    } else if (item.type === "connector") {
+      connectorSet.add(item.id);
     } else {
       floatingSet.add(item.id);
     }
@@ -246,8 +247,6 @@ function groupByTypes(cluster: string[]): string[][] {
       typeMap.get(key)!.push(id);
     }
   }
-  // console.log(typeMap);
-  // console.log(Array.from(typeMap.values()));
   return Array.from(typeMap.values());
 }
 
@@ -266,6 +265,7 @@ function evaluateClusters(
   // } else {
   //   return typeGroups;
   // }
+
   return typeGroups;
 }
 
@@ -305,16 +305,16 @@ export function getStickyNoteColor(color: string): string {
 }
 
 // helper function to get shape map
-function getShapeGroup(shapes: string[]): string[][] {
-  console.log(shapes);
-  const shapeMap: Map<string, string[]> = new Map();
-  for (id of shapes) {
-    const item = items.find((item) => item.id === id);
-    if (item.shape in shapeMap) {
-      shapeMap.get(item.shape)?.push(id);
-    } else {
-      shapeMap.set(item.shape, [id]);
-    }
-  }
-  return Array.from(shapeMap.values());
-}
+// function getShapeGroup(shapes: string[]): string[][] {
+//   console.log(shapes);
+//   const shapeMap: Map<string, string[]> = new Map();
+//   for (id of shapes) {
+//     const item = items.find((item) => item.id === id);
+//     if (item.shape in shapeMap) {
+//       shapeMap.get(item.shape)?.push(id);
+//     } else {
+//       shapeMap.set(item.shape, [id]);
+//     }
+//   }
+//   return Array.from(shapeMap.values());
+// }
