@@ -101,7 +101,7 @@ function processLargeCluster(subGroups: string[][], parentId: string): Json {
       largeClusterJsonObject["content"][curGroupID] = singleJsonObject;
     }
   });
-  console.error(largeClusterJsonObject);
+  console.log(largeClusterJsonObject);
   return largeClusterJsonObject;
 }
 
@@ -141,6 +141,7 @@ async function createJsonObject(
     title: newTitle,
     content: contentArray
   };
+  console.log(newJsonObject);
   return newJsonObject;
 }
 
