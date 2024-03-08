@@ -127,7 +127,7 @@ async function createJsonObject(
   // Get contents
   let contentArray = [];
   for (const id of cluster) {
-    const content = getContent(id);
+    const content = await getContent(id);
     if (content !== NO_CONTENT_MSG) {
       contentArray.push(content);
     }
@@ -135,8 +135,8 @@ async function createJsonObject(
   if (contentArray.length === 0) {
     return null;
   }
-  let newTitle = getTitle(parentId);
-  newTitle = createTitle(contentArray);
+  let newTitle = await getTitle(parentId);
+  newTitle = await createTitle(contentArray);
   const newJsonObject = {
     title: newTitle,
     content: contentArray
