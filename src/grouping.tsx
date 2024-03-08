@@ -4,6 +4,7 @@ import { GetColorName } from "hex-color-to-color-name";
 import { kMeansClusteringWrapper } from "./kMeansClustering";
 
 import data from "./data/grouping/stickyColor";
+import { createTitle } from "./ai";
 
 const GROUPING_THRESHOLD = 5;
 const PARENT_ID_FOR_FLOATING = "floating";
@@ -114,7 +115,7 @@ function addToResJson(newContent: Json, resultJsonObject: Json) {
 /**
  * Generates content in a specified format as an jsonObject. If the cluster has no content, return null.
  */
-function createJsonObject(cluster: string[], parentId: string): jsonObject {
+async function createJsonObject(cluster: string[], parentId: string): jsonObject {
   // Get contents
   let contentArray = [];
   for (const id of cluster) {
@@ -127,6 +128,7 @@ function createJsonObject(cluster: string[], parentId: string): jsonObject {
     return null;
   }
   let newTitle = getTitle(parentId);
+  newTitle = createTitle(contentArray);
   const newJsonObject = {
     title: newTitle,
     content: contentArray
