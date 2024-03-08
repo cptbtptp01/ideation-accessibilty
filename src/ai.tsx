@@ -1,3 +1,4 @@
+import cluster from "cluster";
 import { OpenAI } from "openai";
 
 const openai = new OpenAI({
@@ -5,7 +6,7 @@ const openai = new OpenAI({
   dangerouslyAllowBrowser: true
 });
 
-const createTitle = async (jsonObject: any) => {
+async function createTitle(jsonObject:any) {
   const prompt = createPrompt(jsonObject);
 
   const completion = await openai.chat.completions.create({
@@ -25,11 +26,32 @@ const createTitle = async (jsonObject: any) => {
   return content;
 };
 
-const createPrompt = (contentArray: any) => {
+function createPrompt(contentArray: any) {
   return (
     "You are very good at generating titles for the low vision readers. Can you please create the title for this content which are grouped: " +
     contentArray
   );
 };
 
-export { createTitle };
+export async function addTitle(jsonObject: any) {
+  for (var cluster in jsonObject) {
+    if(jsonObject[cluster].title === "No Title") {
+      jsonObject[cluster].title = await createTitle(jsonObject[cluster].content)
+    }
+
+    if(Array.isArray(jsonObject[cluster].content)) {
+      jsonObject[cluster].title = await createTitle(jsonObject[cluster].content);
+    } else {
+      var clusterObj = jsonObject[cluster].content
+      for (var subCluster in clusterObj) {
+        if (clusterObj[subCluster].title === "No Title") {
+          clusterObj[subCluster].title = await createTitle(
+            clusterObj[subCluster].content
+          );
+        }
+      }
+    }
+  }
+
+  return JSON.stringify(jsonObject, null, 2)
+}
