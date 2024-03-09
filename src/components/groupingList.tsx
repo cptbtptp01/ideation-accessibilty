@@ -15,6 +15,7 @@ interface Props {
 }
 
 const GroupingList: React.FC<Props> = ({ groups, onUpdateGrouping }) => {
+  console.log(groups)
   const initialAnnouncement =
     `There are ${Object.keys(groups).length} parts of the board. ` +
     Object.keys(groups)
@@ -35,8 +36,7 @@ const GroupingList: React.FC<Props> = ({ groups, onUpdateGrouping }) => {
         Update Overview
       </button>
       <div className="sr-only" aria-live="polite">
-        {initialAnnouncement} To continue learning, use Control + Option + Shift
-        + Down arrow.
+        To continue learning, use Control + Option + Shift + Down arrow.
       </div>
       {Object.keys(groups).map((clusterKey) => (
         <div
