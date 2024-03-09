@@ -1,4 +1,3 @@
-import cluster from "cluster";
 import { OpenAI } from "openai";
 
 const openai = new OpenAI({
@@ -35,23 +34,25 @@ function createPrompt(contentArray: any) {
 
 export async function addTitle(jsonObject: any) {
   for (var cluster in jsonObject) {
-    if(jsonObject[cluster].title === "No Title") {
-      jsonObject[cluster].title = await createTitle(jsonObject[cluster].content)
-    }
-
+    let subClusterTitles = []
     if(Array.isArray(jsonObject[cluster].content)) {
       jsonObject[cluster].title = await createTitle(jsonObject[cluster].content);
     } else {
       var clusterObj = jsonObject[cluster].content
       for (var subCluster in clusterObj) {
         if (clusterObj[subCluster].title === "No Title") {
-          clusterObj[subCluster].title = await createTitle(
+          var title = await createTitle(
             clusterObj[subCluster].content
           );
+          clusterObj[subCluster].title = title;
+          subClusterTitles.push(title)
         }
       }
     }
+
+    jsonObject[cluster].title = await createTitle(subClusterTitles);
+
   }
 
-  return JSON.stringify(jsonObject, null, 2)
+  return jsonObject
 }
