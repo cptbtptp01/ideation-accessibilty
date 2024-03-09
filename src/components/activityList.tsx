@@ -6,13 +6,8 @@ interface Props {
 
 const ActivityList: React.FC<Props> = ({ messages }) => {
   return (
-    <div
-      className="cs1 ce12"
-      aria-roledescription="activities"
-      id="log"
-      aria-labelledby="activitiesheading"
-    >
-      <h1 id="activitiesheading">Activities</h1>
+    <div className="cs1 ce12" role="region" aria-label="Activities">
+      <h1>Activities</h1>
       <ul role="list">
         {messages.map((message, index) => (
           <li key={index} role="listitem">

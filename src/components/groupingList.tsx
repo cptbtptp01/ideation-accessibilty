@@ -24,67 +24,50 @@ const GroupingList: React.FC<Props> = ({ groups, onUpdateGrouping }) => {
       })
       .join(" ");
 
-  return (
-    <div className="cs1 ce12" role="region" aria-label="Overview">
-      <h1 aria-label="Overview">Overview</h1>
-      <button
-        className="update-overview-button button button-primary button-medium"
-        type="button"
-        onClick={onUpdateGrouping}
-        aria-label="Update Overview"
-      >
-        Update Overview
-      </button>
-      <div className="sr-only" aria-live="polite">
-        To continue learning, use Control + Option + Shift + Down arrow.
-      </div>
-      {Object.keys(groups).map((clusterKey) => (
-        <div
-          key={clusterKey}
-          role="group"
-          aria-label={`This group is about ${groups[clusterKey].title}`}
-        >
-          <h2>{groups[clusterKey].title}</h2>
-          {Array.isArray(groups[clusterKey].content) ? (
-            <div
-              role="group"
-              aria-label={`summary for group ${groups[clusterKey]}`}
-            >
-              {groups[clusterKey].content.map((item, index) => (
-                <p key={index} dangerouslySetInnerHTML={{ __html: item }} />
-              ))}
-            </div>
-          ) : (
-            Object.keys(groups[clusterKey].content).map((groupKey) => (
+      return (
+        <div className="cs1 ce12" role="region" aria-label="Overview">
+          <h1 aria-label="Overview">Overview</h1>
+          <button
+            className="update-overview-button button button-primary button-medium"
+            type="button"
+            onClick={onUpdateGrouping}
+            aria-label="Update Overview"
+          >
+            Update Overview
+          </button>
+          <div className="sr-only" aria-live="polite">
+            To continue learning, use Control + Option + Shift + left arrow.
+          </div>
+          {Object.keys(groups).map((clusterKey) => (
+            Array.isArray(groups[clusterKey].content) ? (
               <div
-                key={groupKey}
+                key={clusterKey}
                 role="group"
-                aria-label={`This group is about ${groups[clusterKey].content[groupKey].title}`}
+                aria-label={`The board is about ${groups[clusterKey]}`}
               >
-                <h3>{groups[clusterKey].content[groupKey].title}</h3>
-                {Array.isArray(groups[clusterKey].content[groupKey].content) ? (
-                  <div>
-                    {groups[clusterKey].content[groupKey].content.map(
-                      (item, index) => (
-                        <p
-                          key={index}
-                          dangerouslySetInnerHTML={{ __html: item }}
-                        />
-                      )
-                    )}
-                  </div>
-                ) : (
-                  <div>
-                    <p>{groups[clusterKey].content[groupKey].content}</p>
-                  </div>
-                )}
               </div>
-            ))
-          )}
+            ) : (
+              Object.keys(groups[clusterKey].content).map((groupKey) => (
+                <div
+                  key={groupKey}
+                  role="group"
+                  aria-label={`There are ${Array.isArray(groups[clusterKey].content) ? groups[clusterKey].content.length : Object.keys(groups[clusterKey].content).length} items appear to be ${groups[clusterKey].content[groupKey].title}`}
+                >
+                  <h3>{groups[clusterKey].content[groupKey].title}</h3>
+                  {Array.isArray(groups[clusterKey].content[groupKey].content) ? (
+                    <div>
+                    </div>
+                  ) : (
+                    <div>
+                      <p>{groups[clusterKey].content[groupKey].content}</p>
+                    </div>
+                  )}
+                </div>
+              ))
+            )
+          ))}
         </div>
-      ))}
-    </div>
-  );
-};
+      );
+                  }
 
 export default GroupingList;

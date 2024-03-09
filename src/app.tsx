@@ -10,15 +10,24 @@ import Notifications from "./notifications";
 import { addTitle } from "./ai";
 
 const App: React.FC = () => {
-  // groupItems returns a JSON object
   const [groups, setGroups] = React.useState<{ [key: string]: Cluster }>({});
-
   const [messages, setMessages] = React.useState<string[]>([]);
+  const [isLoading, setIsLoading] = React.useState<boolean>(true); // Initially set to true
 
   const handleUpdateGrouping = async () => {
-    const updatedJson = await groupItems(); // return Promise<string>
-    const finalUpdatedJson = await addTitle(updatedJson);
-    setGroups(finalUpdatedJson);
+    setIsLoading(true);
+    setMessages(["Generating summary for the board..."]);
+    try {
+      const updatedJson = await groupItems(); // return Promise<string>
+      const finalUpdatedJson = await addTitle(updatedJson);
+      setGroups(finalUpdatedJson);
+    } catch (error) {
+      console.error("Error updating grouping:", error);
+      setMessages(["Error occurred while updating grouping."]);
+    } finally {
+      setIsLoading(false);
+      setMessages([]);
+    }
   };
 
   React.useEffect(() => {
@@ -26,6 +35,7 @@ const App: React.FC = () => {
       const groupingJson = await groupItems();
       const finalJson = await addTitle(groupingJson);
       setGroups(finalJson);
+      setIsLoading(false); // Once initial data fetching is complete, set isLoading to false
     }
 
     fetchData();
@@ -33,6 +43,7 @@ const App: React.FC = () => {
 
   return (
     <div className="grid">
+      {isLoading && <div className="cs1 ce12" role="region" aria-label="Overview">Generating summary for the board...</div>}
       <GroupingList groups={groups} onUpdateGrouping={handleUpdateGrouping}/>
       <ActivityList messages={messages} />
       <Notifications setMessages={setMessages} />
