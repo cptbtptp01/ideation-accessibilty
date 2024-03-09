@@ -37,6 +37,7 @@ export async function groupItems() {
   processAllItems(jsonObject);
 
   // Conver to a string without modifying any properties and with an indentation of 2 spaces
+  // return JSON.stringify(jsonObject, null, 2);
   return jsonObject;
 }
 

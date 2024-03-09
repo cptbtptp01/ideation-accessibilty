@@ -4,13 +4,14 @@ import { createRoot } from "react-dom/client";
 import "../src/assets/style.css";
 import { groupItems } from "./grouping";
 import GroupingList from "./components/groupingList";
+import { Cluster } from "./components/groupingList";
 import ActivityList from "./components/activityList"
 import Notifications from "./notifications";
 import { addTitle } from "./ai";
 
 const App: React.FC = () => {
   // groupItems returns a JSON object
-  const [groups, setGroups] = React.useState<string>("");
+  const [groups, setGroups] = React.useState<{ [key: string]: Cluster }>({});
 
   const [messages, setMessages] = React.useState<string[]>([]);
 
