@@ -7,7 +7,6 @@ const openai = new OpenAI({
 
 async function createTitle(jsonObject:any) {
   const prompt = createPrompt(jsonObject);
-
   const completion = await openai.chat.completions.create({
     model: "gpt-4",
     messages: [{ role: "user", content: prompt }]
@@ -27,32 +26,28 @@ async function createTitle(jsonObject:any) {
 
 function createPrompt(contentArray: any) {
   return (
-    "You are very good at generating titles for the low vision readers. Can you please create the title for this content which are grouped: " +
-    contentArray
+    "You are very good at generating titles base on the digital whiteboard's content. Can you please create the title for this content which are grouped: " +
+    contentArray + "in max 10 words, following [main idea]: [sub idea] format? If the content is not meaningful, please update title as 'The board is farley empty'"
   );
 };
 
 export async function addTitle(jsonObject: any) {
-  for (var cluster in jsonObject) {
-    let subClusterTitles = []
-    if(Array.isArray(jsonObject[cluster].content)) {
+  for (const cluster in jsonObject) {
+    const subClusterTitles: string[] = [];
+    if (Array.isArray(jsonObject[cluster].content)) {
       jsonObject[cluster].title = await createTitle(jsonObject[cluster].content);
     } else {
-      var clusterObj = jsonObject[cluster].content
-      for (var subCluster in clusterObj) {
+      const clusterObj = jsonObject[cluster].content;
+      for (const subCluster in clusterObj) {
         if (clusterObj[subCluster].title === "No Title") {
-          var title = await createTitle(
-            clusterObj[subCluster].content
-          );
+          const title = await createTitle(clusterObj[subCluster].content);
           clusterObj[subCluster].title = title;
-          subClusterTitles.push(title)
+          subClusterTitles.push(title);
         }
       }
+      jsonObject[cluster].title = await createTitle(subClusterTitles);
     }
-
-    jsonObject[cluster].title = await createTitle(subClusterTitles);
-
   }
 
-  return jsonObject
+  return jsonObject;
 }

@@ -13,6 +13,8 @@ const App: React.FC = () => {
   const [groups, setGroups] = React.useState<{ [key: string]: Cluster }>({});
   const [messages, setMessages] = React.useState<string[]>([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(true); // Initially set to true
+  const activityListRef = React.useRef<HTMLDivElement>(null);
+  const groupingListRef = React.useRef<HTMLDivElement>(null);
 
   const handleUpdateGrouping = async () => {
     setIsLoading(true);
@@ -30,6 +32,19 @@ const App: React.FC = () => {
     }
   };
 
+  const handleMoveToActivities = () => {
+    if (activityListRef.current) {
+      activityListRef.current.focus();
+    }
+  };
+
+  const handleMoveToGrouping = () => {
+    if (groupingListRef.current) {
+      groupingListRef.current.focus();
+    }
+  }
+
+
   React.useEffect(() => {
     async function fetchData() {
       const groupingJson = await groupItems();
@@ -44,8 +59,12 @@ const App: React.FC = () => {
   return (
     <div className="grid">
       {isLoading && <div className="cs1 ce12" role="region" aria-label="Overview">Generating summary for the board...</div>}
-      <GroupingList groups={groups} onUpdateGrouping={handleUpdateGrouping}/>
-      <ActivityList messages={messages} />
+      <div className="cs1 ce12" ref={groupingListRef} id="groupingList" tabIndex={-1} aria-label="Overview">
+        <GroupingList groups={groups} onUpdateGrouping={handleUpdateGrouping} />
+      </div>
+      <div className="cs1 ce12" ref={activityListRef} id="activityList" tabIndex={-1} aria-label="Activities">
+        <ActivityList messages={messages} />
+      </div>
       <Notifications setMessages={setMessages} />
     </div>
   );
