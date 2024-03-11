@@ -15,7 +15,9 @@ const ActivityList: React.FC<Props> = ({ messages }) => {
 
   React.useEffect(() => {
     // Filter out duplicate messages
-    const newMessages = messages.filter(message => !prevMessagesRef.current.includes(message));
+    const newMessages = messages.filter(
+      (message) => !prevMessagesRef.current.includes(message)
+    );
     if (newMessages.length > 0) {
       if (listRef.current) {
         listRef.current.scrollTop = listRef.current.scrollHeight;
