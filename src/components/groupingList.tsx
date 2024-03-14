@@ -14,15 +14,14 @@ interface Props {
   onUpdateGrouping: () => void;
 }
 
+function stripHtmlTags(htmlString: string) {
+  const tempElement = document.createElement("div");
+  tempElement.innerHTML = htmlString;
+  return tempElement.textContent || tempElement.innerText || "";
+}
+
 const GroupingList: React.FC<Props> = ({ groups, onUpdateGrouping }) => {
-  console.log(groups)
-  const initialAnnouncement =
-    `There are ${Object.keys(groups).length} parts of the board. ` +
-    Object.keys(groups)
-      .map((clusterKey) => {
-        return `${clusterKey} is about ${groups[clusterKey].title}.`;
-      })
-      .join(" ");
+  console.log(groups);
 
   return (
     <div className="cs1 ce12" role="region" aria-label="Overview">
@@ -36,53 +35,57 @@ const GroupingList: React.FC<Props> = ({ groups, onUpdateGrouping }) => {
         Update Overview
       </button>
       <div className="sr-only" aria-live="polite">
-        To continue learning, use Control + Option + Shift + Down arrow.
+        To continue learning, use Control + Option + Shift + left arrow.
       </div>
-      {Object.keys(groups).map((clusterKey) => (
-        <div
-          key={clusterKey}
-          role="group"
-          aria-label={`This group is about ${groups[clusterKey].title}`}
-        >
-          <h2>{groups[clusterKey].title}</h2>
-          {Array.isArray(groups[clusterKey].content) ? (
-            <div
-              role="group"
-              aria-label={`summary for group ${groups[clusterKey]}`}
-            >
-              {groups[clusterKey].content.map((item, index) => (
-                <p key={index} dangerouslySetInnerHTML={{ __html: item }} />
-              ))}
-            </div>
-          ) : (
-            Object.keys(groups[clusterKey].content).map((groupKey) => (
-              <div
-                key={groupKey}
-                role="group"
-                aria-label={`This group is about ${groups[clusterKey].content[groupKey].title}`}
-              >
-                <h3>{groups[clusterKey].content[groupKey].title}</h3>
-                {Array.isArray(groups[clusterKey].content[groupKey].content) ? (
-                  <div>
-                    {groups[clusterKey].content[groupKey].content.map(
-                      (item, index) => (
-                        <p
-                          key={index}
-                          dangerouslySetInnerHTML={{ __html: item }}
-                        />
-                      )
-                    )}
-                  </div>
-                ) : (
-                  <div>
-                    <p>{groups[clusterKey].content[groupKey].content}</p>
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      ))}
+      {Object.keys(groups).map((clusterKey) => {
+        const cluster = groups[clusterKey];
+        return (
+          <div
+            key={clusterKey}
+            role="group"
+            aria-label={`The board is about ${cluster.title}`}
+          >
+            <h2>{cluster.title.replace(/"/g, "")}</h2>
+            {Array.isArray(cluster.content)
+              ? // Render if cluster content is an array
+                cluster.content.map((item, index) => (
+                  <p key={index} dangerouslySetInnerHTML={{ __html: item }} />
+                ))
+              : // Render if cluster content is an object
+                Object.keys(cluster.content).map((groupKey) => {
+                  const group = cluster.content[groupKey];
+                  return (
+                    <div
+                      key={groupKey}
+                      role="group"
+                      aria-label={`There are ${
+                        Array.isArray(group.content)
+                          ? group.content.length
+                          : Object.keys(group.content).length
+                      } items appear to be ${group.title}`}
+                    >
+                      <h3>{group.title.replace(/"/g, "")}</h3>
+                      {Array.isArray(group.content) ? (
+                        // Render if group content is an array
+                        <ul>
+                          <p>Board contents belong to this section:</p>
+                          {group.content.map((item, index) => (
+                            <li key={index}>{stripHtmlTags(item)}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        // Render if group content is a string
+                        <ul>
+                          <p>Board contents belong to this section:</p>
+                          <li>{stripHtmlTags(group.content)}</li>
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
+          </div>
+        );
+      })}
     </div>
   );
 };
