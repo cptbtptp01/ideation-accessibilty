@@ -150,7 +150,8 @@ function createJsonObject(
 function getContent(id: string): string {
   const item = items.find((item) => item.id === id);
   if (item && item.content) {
-    return item.content;
+    return item
+    // return item.content;
   } else {
     return NO_CONTENT_MSG;
   }
