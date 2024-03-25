@@ -20,8 +20,33 @@ function stripHtmlTags(htmlString: string) {
   return tempElement.textContent || tempElement.innerText || "";
 }
 
+async function handleHover(item: any){
+  await miro.board.viewport.zoomTo(item);
+};
+
+
 const GroupingList: React.FC<Props> = ({ groups, onUpdateGrouping }) => {
-  console.log(groups);
+  const targetRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const handleFocus = () => {
+      // Do something when the screen reader focuses on the target element
+      console.log("Screen reader focused on target element");
+      // You can perform any action here, such as announcing additional information or triggering some functionality
+    };
+
+    const targetElement = targetRef.current;
+
+    if (targetElement) {
+      targetElement.addEventListener("focus", handleFocus);
+    }
+
+    return () => {
+      if (targetElement) {
+        targetElement.removeEventListener("focus", handleFocus);
+      }
+    };
+  }, []);
 
   return (
     <div className="cs1 ce12" role="region" aria-label="Overview">
@@ -49,7 +74,11 @@ const GroupingList: React.FC<Props> = ({ groups, onUpdateGrouping }) => {
             {Array.isArray(cluster.content)
               ? // Render if cluster content is an array
                 cluster.content.map((item, index) => (
-                  <p key={index} dangerouslySetInnerHTML={{ __html: item }} />
+                  <p
+                    key={index}
+                    dangerouslySetInnerHTML={{ __html: item.content }}
+                    onClick={() => handleHover(item)}
+                  />
                 ))
               : // Render if cluster content is an object
                 Object.keys(cluster.content).map((groupKey) => {
@@ -70,7 +99,16 @@ const GroupingList: React.FC<Props> = ({ groups, onUpdateGrouping }) => {
                         <ul>
                           <p>Board contents belong to this section:</p>
                           {group.content.map((item, index) => (
-                            <li key={index}>{stripHtmlTags(item)}</li>
+                            <li
+                              key={index}
+                              ref={targetRef}
+                              aria-live="assertive"
+                              aria-atomic="true"
+                            >
+                              <a onClick={() => handleHover(item)}>
+                                {stripHtmlTags(item.content)}
+                              </a>
+                            </li>
                           ))}
                         </ul>
                       ) : (
