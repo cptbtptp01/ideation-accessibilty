@@ -6,7 +6,11 @@ const openai = new OpenAI({
 });
 
 async function createTitle(jsonObject:any) {
-  const prompt = createPrompt(jsonObject);
+  const contentObject = jsonObject.map((item:object) => {
+    return item.content;
+  }
+  )
+  const prompt = createPrompt(contentObject);
   const completion = await openai.chat.completions.create({
     model: "gpt-4",
     messages: [{ role: "user", content: prompt }]
